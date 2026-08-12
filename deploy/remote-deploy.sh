@@ -12,12 +12,13 @@ ssh -o StrictHostKeyChecking=accept-new "$HOST" bash -s <<EOF
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-if ! command -v node >/dev/null 2>&1; then
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-  apt-get install -y nodejs build-essential python3
-fi
 apt-get update -y
-apt-get install -y git nginx
+apt-get install -y build-essential python3 git curl ca-certificates nginx
+
+if ! command -v node >/dev/null 2>&1 || [ "\$(node -p "process.versions.node.split('.')[0]" 2>/dev/null || echo 0)" -lt 22 ]; then
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  apt-get install -y nodejs
+fi
 
 mkdir -p /var/www
 if [ -d $APP_DIR/.git ]; then
