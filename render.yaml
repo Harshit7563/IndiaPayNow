@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: india-pay-now
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OTP_DEMO_CODE
+        value: '123456'
+      - key: DB_PATH
+        value: /data/indiapaynow.db
+      - key: CLIENT_URL
+        value: '*'
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: RAPIDAPI_PNR_HOST
+        value: irctc-indian-railway-pnr-status.p.rapidapi.com
+    disk:
+      name: ipn-data
+      mountPath: /data
+      sizeGB: 1

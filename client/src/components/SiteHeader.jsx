@@ -1,0 +1,265 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  BadgeCheck,
+  BriefcaseBusiness,
+  Building2,
+  ChevronDown,
+  Code2,
+  Fingerprint,
+  IdCard,
+  Landmark,
+  Link2,
+  Menu,
+  Newspaper,
+  QrCode,
+  ScanFace,
+  ShieldCheck,
+  UserRound,
+  Users,
+  X,
+} from 'lucide-react';
+import { Logo } from './Logo';
+import { NavMegaMenu } from './NavMegaMenu';
+import { serviceCatalog } from '../data/services';
+
+const byGroup = (id) => serviceCatalog.find((g) => g.id === id)?.items || [];
+
+const menus = [
+  {
+    label: 'Recharge & Bills',
+    href: '#payments',
+    columns: [
+      { title: 'Recharges', items: byGroup('recharges') },
+      { title: 'Bill Payments', items: byGroup('bills') },
+    ],
+  },
+  {
+    label: 'Ticket Booking',
+    href: '/login',
+    columns: [
+      {
+        title: 'Travel & Movies',
+        items: [
+          ...byGroup('book').filter((i) => ['movie-tickets', 'imax-tickets'].includes(i[0])),
+          ...byGroup('other').filter((i) => ['pnr-status', 'live-train'].includes(i[0])),
+          ...byGroup('recharges').filter((i) => ['metro-recharge', 'fastag'].includes(i[0])),
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Payments & Services',
+    href: '#other',
+    columns: [
+      {
+        title: 'Invest & Pay',
+        items: byGroup('book').filter((i) => ['gold', 'mutual-funds', 'stocks', 'gas'].includes(i[0])),
+      },
+      { title: 'More Services', gridCols: 4, items: byGroup('other') },
+    ],
+  },
+  {
+    label: 'Verification Suite',
+    href: '/verification/kyc',
+    links: [
+      ['KYC Verification', '/verification/kyc', ShieldCheck],
+      ['Aadhaar Verify', '/verification/aadhaar', Fingerprint],
+      ['PAN Verify', '/verification/pan', IdCard],
+      ['Bank Account Verify', '/verification/bank', Landmark],
+      ['Face Match', '/verification/face', ScanFace],
+      ['Credit Score', '/verification/credit-score', BadgeCheck],
+    ],
+  },
+  {
+    label: 'For Business',
+    href: '/for-business/payment-links',
+    links: [
+      ['Payment Links', '/for-business/payment-links', Link2],
+      ['Merchant QR', '/for-business/merchant-qr', QrCode],
+      ['Settlements', '/for-business/settlements', Building2],
+      ['Developer APIs', '/for-business/developer-apis', Code2],
+      ['Open business account', '/register', BriefcaseBusiness],
+    ],
+  },
+  {
+    label: 'Company',
+    href: '/company/about-us',
+    links: [
+      ['About Us', '/company/about-us', Building2],
+      ['Careers', '/company/careers', Users],
+      ['Press', '/company/press', Newspaper],
+      ['Blog', '/company/blog', Newspaper],
+      ['Help Centre', '/company/about-us', UserRound],
+    ],
+  },
+];
+
+function ServiceLink({ slug, label, Icon, onNavigate }) {
+  return (
+    <Link
+      to={`/app/bills/${slug}`}
+      onClick={onNavigate}
+      className="flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 hover:bg-brand-50"
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-black">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="truncate text-sm font-medium text-[#001c64]">{label}</span>
+    </Link>
+  );
+}
+
+function MenuPanel({ menu, onNavigate }) {
+  if (menu.columns) {
+    const cols = menu.columns.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-3';
+    return (
+      <div className={`grid grid-cols-1 gap-x-10 gap-y-6 ${cols}`}>
+        {menu.columns.map((col) => (
+          <div key={col.title} className="min-w-0">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">{col.title}</p>
+            <div className={`grid gap-1 ${col.items.length > 6 ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
+              {col.items.map(([slug, label, Icon]) => (
+                <ServiceLink key={slug} slug={slug} label={label} Icon={Icon} onNavigate={onNavigate} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid max-w-xl grid-cols-1 gap-1 sm:grid-cols-2">
+      {menu.links.map(([label, href, Icon]) => {
+        const content = (
+          <>
+            {Icon ? (
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-black">
+                <Icon className="h-4 w-4" />
+              </span>
+            ) : null}
+            {label}
+          </>
+        );
+        const className =
+          'flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-black hover:bg-slate-50';
+        return href.startsWith('/') ? (
+          <Link key={label} to={href} onClick={onNavigate} className={className}>
+            {content}
+          </Link>
+        ) : (
+          <a key={label} href={href} onClick={onNavigate} className={className}>
+            {content}
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
+export function SiteHeader() {
+  const [open, setOpen] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(null);
+  const [active, setActive] = useState(null);
+
+  const closeDesktop = () => setActive(null);
+  const toggleMenu = (label) => setActive((current) => (current === label ? null : label));
+
+  return (
+    <>
+      {active && (
+        <button type="button" className="fixed inset-0 z-30" aria-label="Close menu" onClick={closeDesktop} />
+      )}
+      <header className="relative sticky top-0 z-40 border-b border-black/5 bg-[#f7f8fa]/90 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 lg:px-6">
+        <Link to="/" aria-label="India Pay Now home" className="shrink-0">
+          <Logo size="sm" />
+        </Link>
+
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+          {menus.map((menu, index) => {
+            const align = index >= 4 ? 'right' : index === 0 ? 'left' : 'center';
+            return (
+              <div key={menu.label} className="relative">
+                <button
+                  type="button"
+                  aria-expanded={active === menu.label}
+                  onClick={() => toggleMenu(menu.label)}
+                  className={`inline-flex items-center gap-0.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold ${
+                    active === menu.label ? 'bg-white text-black shadow-sm' : 'text-black hover:bg-white/70'
+                  }`}
+                >
+                  {menu.label}
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 text-black transition ${active === menu.label ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {active === menu.label && (
+                  <NavMegaMenu menu={menu} onNavigate={closeDesktop} align={align} />
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
+          <Link to="/login" className="text-sm font-semibold text-slate-600 transition hover:text-[#111]">
+            Log In
+          </Link>
+          <Link
+            to="/register"
+            className="inline-flex rounded-full bg-[#111] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+          >
+            Sign Up
+          </Link>
+        </div>
+
+        <button className="ml-auto rounded-full p-2 lg:hidden" onClick={() => setOpen(true)} aria-label="Menu">
+          <Menu className="h-6 w-6 text-black" />
+        </button>
+      </div>
+
+      {open && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-white lg:hidden">
+          <div className="flex h-[72px] items-center justify-between border-b border-slate-200 px-4">
+            <Logo />
+            <button onClick={() => setOpen(false)} aria-label="Close">
+              <X className="h-6 w-6 text-black" />
+            </button>
+          </div>
+          <div className="p-4 pb-24">
+            {menus.map((menu) => (
+              <div key={menu.label} className="border-b border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setMobileMenu(mobileMenu === menu.label ? null : menu.label)}
+                  className="flex w-full items-center justify-between py-3.5 text-left text-base font-semibold text-black"
+                >
+                  {menu.label}
+                  <ChevronDown className={`h-4 w-4 text-black transition ${mobileMenu === menu.label ? 'rotate-180' : ''}`} />
+                </button>
+                {mobileMenu === menu.label && (
+                  <div className="pb-4">
+                    <MenuPanel menu={menu} onNavigate={() => setOpen(false)} />
+                  </div>
+                )}
+              </div>
+            ))}
+            <Link to="/login" onClick={() => setOpen(false)} className="mt-4 block rounded-xl px-3 py-3 font-bold text-brand-600">
+              Log In
+            </Link>
+            <Link
+              to="/register"
+              onClick={() => setOpen(false)}
+              className="mt-2 block rounded-full bg-[#111] px-3 py-3 text-center font-bold text-white"
+            >
+              Sign Up
+            </Link>
+          </div>
+        </div>
+      )}
+    </header>
+    </>
+  );
+}
