@@ -94,5 +94,5 @@ pm2 startup systemd -u root --hp /root >/dev/null 2>&1 || true
 
 echo ""
 echo "==> Deploy complete"
-echo "    Health: curl -s http://127.0.0.1:5001/health"
+echo "    Health: curl -s http://127.0.0.1:5010/health"
 echo "    Configure Nginx: cp deploy/nginx.conf /etc/nginx/sites-available/indiapaynow && ln -sf /etc/nginx/sites-available/indiapaynow /etc/nginx/sites-enabled/ && nginx -t && systemctl reload nginx"

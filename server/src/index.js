@@ -11,11 +11,12 @@ import db, { initSchema } from './db/database.js';
 import routes from './routes/index.js';
 import { fail } from './utils/helpers.js';
 
-dotenv.config();
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = Number(process.env.PORT) || 5001;
 const clientDist = path.join(__dirname, '../../client/dist');
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -46,7 +47,7 @@ app.use(
 );
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'India Pay Now' });
+  res.json({ ok: true, service: 'India Pay Now', port: PORT });
 });
 
 app.use('/api', routes);
@@ -65,10 +66,15 @@ app.use((err, _req, res, _next) => {
   fail(res, err.message || 'Internal server error', err.status || 500);
 });
 
-app.listen(PORT, () => {
-  console.log(`India Pay Now API running on http://localhost:${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`India Pay Now API running on http://0.0.0.0:${PORT}`);
   const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
   if (userCount === 0) {
     console.log('Database empty — run: npm run seed');
   }
+});
+
+server.on('error', (err) => {
+  console.error('Server failed to start:', err.message);
+  process.exit(1);
 });
