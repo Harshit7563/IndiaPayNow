@@ -44,11 +44,26 @@ if [ ! -f server/.env ]; then
   {
     echo ""
     echo "NODE_ENV=production"
-    echo "PORT=5001"
+    echo "PORT=5010"
     echo "CLIENT_URL=*"
     echo "DB_PATH=$APP_DIR/server/data/indiapaynow.db"
   } >> server/.env
   echo "WARNING: Edit server/.env and set JWT_SECRET + RAPIDAPI_KEY"
+else
+  # Ensure production port (avoid clash with other apps on 5001)
+  if ! grep -q '^PORT=' server/.env; then
+    echo "PORT=5010" >> server/.env
+  else
+    sed -i 's/^PORT=.*/PORT=5010/' server/.env
+  fi
+  if ! grep -q '^NODE_ENV=' server/.env; then
+    echo "NODE_ENV=production" >> server/.env
+  else
+    sed -i 's/^NODE_ENV=.*/NODE_ENV=production/' server/.env
+  fi
+  if ! grep -q '^CLIENT_URL=' server/.env; then
+    echo "CLIENT_URL=*" >> server/.env
+  fi
 fi
 
 echo "==> Installing dependencies..."

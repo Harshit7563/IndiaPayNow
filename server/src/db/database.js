@@ -4,9 +4,10 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
-dotenv.config();
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
 const dbPath = process.env.DB_PATH || path.join(__dirname, '../../data/indiapaynow.db');
 const dbDir = path.dirname(path.resolve(dbPath));
 
