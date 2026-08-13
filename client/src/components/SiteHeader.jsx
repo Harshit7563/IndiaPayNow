@@ -174,9 +174,9 @@ export function SiteHeader() {
       {active && (
         <button type="button" className="fixed inset-0 z-30" aria-label="Close menu" onClick={closeDesktop} />
       )}
-      <header className="relative sticky top-0 z-40 border-b border-black/5 bg-[#f7f8fa]/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 lg:px-6">
-        <Link to="/" aria-label="India Pay Now home" className="shrink-0">
+      <header className="relative sticky top-0 z-40 border-b border-black/5 bg-[#f7f8fa]/90 backdrop-blur pt-[env(safe-area-inset-top)]">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:h-16 sm:gap-4 sm:px-4 lg:px-6">
+        <Link to="/" aria-label="India Pay Now home" className="min-w-0 shrink">
           <Logo size="sm" />
         </Link>
 
@@ -218,20 +218,28 @@ export function SiteHeader() {
           </Link>
         </div>
 
-        <button className="ml-auto rounded-full p-2 lg:hidden" onClick={() => setOpen(true)} aria-label="Menu">
+        <button
+          className="ml-auto flex h-11 w-11 items-center justify-center rounded-full p-2 lg:hidden"
+          onClick={() => setOpen(true)}
+          aria-label="Menu"
+        >
           <Menu className="h-6 w-6 text-black" />
         </button>
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-white lg:hidden">
-          <div className="flex h-[72px] items-center justify-between border-b border-slate-200 px-4">
-            <Logo />
-            <button onClick={() => setOpen(false)} aria-label="Close">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+          <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4 pt-[env(safe-area-inset-top)] sm:h-[72px]">
+            <Logo size="sm" />
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close"
+              className="flex h-11 w-11 items-center justify-center"
+            >
               <X className="h-6 w-6 text-black" />
             </button>
           </div>
-          <div className="p-4 pb-24">
+          <div className="p-4 pb-28">
             {menus.map((menu) => (
               <div key={menu.label} className="border-b border-slate-100">
                 <button

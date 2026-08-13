@@ -149,40 +149,44 @@ export default function Login() {
   const isBusiness = accountType === 'business';
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <header className="border-b border-[#e5e7eb] px-4 py-5">
+    <div className="flex min-h-dvh min-h-screen flex-col bg-white pb-[env(safe-area-inset-bottom)]">
+      <header className="border-b border-[#e5e7eb] px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:py-5">
         <div className="mx-auto flex max-w-lg justify-center">
-          <Link to="/">
-            <Logo />
+          <Link to="/" className="max-w-[90vw]">
+            <Logo size="sm" className="sm:hidden" />
+            <Logo className="hidden sm:block" />
           </Link>
         </div>
       </header>
 
-      <main className="flex flex-1 items-start justify-center px-4 py-12">
+      <main className="flex flex-1 items-start justify-center px-4 py-8 sm:py-12">
         <div className="fade-up w-full max-w-md">
-          <h1 className="text-center font-display text-3xl font-extrabold text-[#001c64]">
+          <h1 className="text-center font-display text-[1.75rem] font-extrabold leading-tight text-[#001c64] sm:text-3xl">
             {isBusiness ? 'Business log in' : 'Log in'}
           </h1>
-          <p className="mt-2 text-center text-sm text-slate-500">
-            {isBusiness ? 'Merchant dashboard access' : 'Personal wallet & payments'} ·{' '}
+          <p className="mt-2 px-1 text-center text-sm leading-5 text-slate-500">
+            {isBusiness ? 'Merchant dashboard' : 'Personal wallet'} ·{' '}
             <button
               type="button"
               onClick={() => selectAccountType(isBusiness ? 'personal' : 'business')}
-              className="font-bold text-[#0070ba] hover:underline"
+              className="inline min-h-[44px] font-bold text-[#0070ba] hover:underline sm:min-h-0"
             >
               {isBusiness ? 'Use personal' : 'Use business'}
             </button>
           </p>
           <p className="mt-1 text-center text-sm text-slate-500">
             New here?{' '}
-            <Link to={`/register?type=${accountType}`} className="font-bold text-[#0070ba] hover:underline">
+            <Link
+              to={`/register?type=${accountType}`}
+              className="inline-flex min-h-[44px] items-center font-bold text-[#0070ba] hover:underline sm:min-h-0"
+            >
               Sign up
             </Link>
           </p>
 
           {user && searchParams.get('switch') === '1' ? (
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Signed in as <strong>{user.email}</strong>.{' '}
+              Signed in as <strong className="break-all">{user.email}</strong>.{' '}
               <button
                 type="button"
                 className="font-bold text-[#0070ba] hover:underline"
@@ -196,7 +200,7 @@ export default function Login() {
             </div>
           ) : null}
 
-          <div className="mt-8 rounded-3xl border border-[#e5e7eb] bg-white p-6 sm:p-8">
+          <div className="mt-6 rounded-[1.5rem] border border-[#e5e7eb] bg-white p-4 shadow-sm sm:mt-8 sm:rounded-3xl sm:p-8 sm:shadow-none">
             {mode === 'password' ? (
               <form onSubmit={submitPassword} className="space-y-4">
                 <Input
@@ -206,6 +210,7 @@ export default function Login() {
                   onChange={update}
                   placeholder="Email or mobile number"
                   autoComplete="username"
+                  inputMode="email"
                 />
                 <div className="relative">
                   <Input
@@ -216,19 +221,19 @@ export default function Login() {
                     onChange={update}
                     placeholder="Enter your password"
                     autoComplete="current-password"
-                    className="[&_input]:pr-11"
+                    className="[&_input]:pr-12"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((s) => !s)}
-                    className="absolute right-3.5 top-[39px] text-slate-400"
+                    className="absolute right-2 top-[34px] flex h-11 w-11 items-center justify-center text-slate-400"
                     aria-label="Toggle password"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 text-slate-600">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                  <label className="flex min-h-[44px] items-center gap-2 text-slate-600 sm:min-h-0">
                     <input
                       type="checkbox"
                       name="rememberMe"
@@ -238,17 +243,20 @@ export default function Login() {
                     />
                     Stay logged in
                   </label>
-                  <Link to="/forgot-password" className="font-bold text-[#0070ba] hover:underline">
+                  <Link
+                    to="/forgot-password"
+                    className="inline-flex min-h-[44px] items-center font-bold text-[#0070ba] hover:underline sm:min-h-0"
+                  >
                     Forgot?
                   </Link>
                 </div>
-                <Button type="submit" loading={loading} className="mt-2 w-full py-3.5">
+                <Button type="submit" loading={loading} className="mt-1 min-h-12 w-full py-3.5 text-base">
                   Log In
                 </Button>
                 <button
                   type="button"
                   onClick={() => switchMode('otp')}
-                  className="w-full pt-1 text-sm font-bold text-[#0070ba] hover:underline"
+                  className="flex min-h-[44px] w-full items-center justify-center text-sm font-bold text-[#0070ba] hover:underline"
                 >
                   Use one-time code instead
                 </button>
@@ -262,21 +270,22 @@ export default function Login() {
                   onChange={update}
                   placeholder="Email or mobile number"
                   autoComplete="username"
+                  inputMode="email"
                 />
-                <Button type="submit" loading={loading} className="w-full py-3.5">
+                <Button type="submit" loading={loading} className="min-h-12 w-full py-3.5 text-base">
                   Send code
                 </Button>
                 <button
                   type="button"
                   onClick={() => switchMode('password')}
-                  className="w-full text-sm font-bold text-[#0070ba] hover:underline"
+                  className="flex min-h-[44px] w-full items-center justify-center text-sm font-bold text-[#0070ba] hover:underline"
                 >
                   Use password instead
                 </button>
               </form>
             ) : (
               <form onSubmit={verifyOtp} className="space-y-5">
-                <p className="rounded-2xl bg-[#eef5ff] p-3 text-sm text-[#003087]">
+                <p className="rounded-2xl bg-[#eef5ff] p-3 text-sm leading-5 text-[#003087]">
                   Code sent. Demo OTP: <strong>123456</strong>
                 </p>
                 <Input
@@ -288,23 +297,24 @@ export default function Login() {
                   }
                   placeholder="6-digit code"
                   inputMode="numeric"
-                  className="[&_input]:text-center [&_input]:text-2xl [&_input]:tracking-[0.4em]"
+                  autoComplete="one-time-code"
+                  className="[&_input]:text-center [&_input]:text-xl [&_input]:tracking-[0.35em] sm:[&_input]:text-2xl sm:[&_input]:tracking-[0.4em]"
                 />
-                <Button type="submit" loading={loading} className="w-full py-3.5">
+                <Button type="submit" loading={loading} className="min-h-12 w-full py-3.5 text-base">
                   Log In
                 </Button>
                 <button
                   type="button"
                   onClick={requestOtp}
                   disabled={loading || resendCooldown > 0}
-                  className="w-full text-sm font-bold text-[#0070ba] disabled:cursor-not-allowed disabled:text-slate-400"
+                  className="flex min-h-[44px] w-full items-center justify-center text-sm font-bold text-[#0070ba] disabled:cursor-not-allowed disabled:text-slate-400"
                 >
                   {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
                 </button>
                 <button
                   type="button"
                   onClick={() => switchMode('password')}
-                  className="w-full text-sm font-semibold text-slate-500 hover:text-[#0070ba]"
+                  className="flex min-h-[44px] w-full items-center justify-center text-sm font-semibold text-slate-500 hover:text-[#0070ba]"
                 >
                   Use password instead
                 </button>

@@ -506,17 +506,18 @@ export default function Register() {
   const showBack = step !== 'type';
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <header className="border-b border-[#e5e7eb] px-4 py-5">
+    <div className="flex min-h-dvh min-h-screen flex-col bg-white pb-[env(safe-area-inset-bottom)]">
+      <header className="border-b border-[#e5e7eb] px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:py-5">
         <div className="mx-auto flex max-w-lg justify-center">
-          <Link to="/">
-            <Logo />
+          <Link to="/" className="max-w-[90vw]">
+            <Logo size="sm" className="sm:hidden" />
+            <Logo className="hidden sm:block" />
           </Link>
         </div>
       </header>
 
-      <main className="flex flex-1 items-start justify-center px-4 py-10 sm:py-12">
-        <div className="fade-up w-full max-w-md">
+      <main className="flex flex-1 items-start justify-center px-4 py-6 sm:py-12">
+        <div className="fade-up w-full max-w-md pb-8">
           {showBack ? (
             <button
               type="button"
@@ -530,7 +531,7 @@ export default function Register() {
 
           {step === 'type' && (
             <>
-              <h1 className="text-center font-display text-3xl font-extrabold text-[#111]">
+              <h1 className="text-center font-display text-[1.75rem] font-extrabold text-[#111] sm:text-3xl">
                 Create your account
               </h1>
               <p className="mt-2 text-center text-sm text-slate-500">
@@ -576,7 +577,7 @@ export default function Register() {
 
           {step === 'personal' && (
             <>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#111]">
+              <h1 className="font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
                 Personal information
               </h1>
               <p className="mt-2 text-sm text-slate-500">Make sure this matches your official ID.</p>
@@ -642,7 +643,7 @@ export default function Register() {
 
           {step === 'address' && (
             <>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#111]">
+              <h1 className="font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
                 Your address
               </h1>
               <p className="mt-2 text-sm text-slate-500">Make sure to use your billing address.</p>
@@ -779,7 +780,7 @@ export default function Register() {
 
           {step === 'kyc' && (
             <>
-              <h1 className="font-display text-3xl font-extrabold leading-tight tracking-tight text-[#111]">
+              <h1 className="font-display text-[1.75rem] font-extrabold leading-tight tracking-tight text-[#111] sm:text-3xl">
                 To pay, you need to provide some information
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-slate-500">
@@ -863,7 +864,7 @@ export default function Register() {
 
           {step === 'kyc-pan' && (
             <>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#111]">
+              <h1 className="font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
                 Verify your PAN
               </h1>
               <p className="mt-2 text-sm text-slate-500">
@@ -893,7 +894,7 @@ export default function Register() {
 
           {step === 'kyc-aadhaar' && (
             <>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#111]">
+              <h1 className="font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
                 Verify your Aadhaar
               </h1>
               <p className="mt-2 text-sm text-slate-500">
@@ -956,7 +957,7 @@ export default function Register() {
 
           {step === 'business' && (
             <>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#111]">
+              <h1 className="font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
                 Business information
               </h1>
               <p className="mt-2 text-sm text-slate-500">
@@ -1012,7 +1013,7 @@ export default function Register() {
 
           {step === 'credentials' && (
             <>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#111]">
+              <h1 className="font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
                 Account details
               </h1>
               <p className="mt-2 text-sm text-slate-500">
@@ -1105,7 +1106,7 @@ export default function Register() {
 
           {step === 'otp' && (
             <>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-[#111]">
+              <h1 className="font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
                 Verify your mobile
               </h1>
               <p className="mt-2 text-sm text-slate-500">OTP sent to +91 {form.mobile}</p>

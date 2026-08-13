@@ -210,7 +210,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa] text-[#111111]">
+    <div className="min-h-dvh min-h-screen overflow-x-hidden bg-[#f7f8fa] text-[#111111]">
       <SiteHeader />
 
       {/* Hero */}
