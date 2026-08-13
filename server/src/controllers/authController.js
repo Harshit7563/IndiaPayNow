@@ -104,9 +104,25 @@ export const register = (req, res) => {
     if (completed) return fail(res, 'Email or mobile already registered', 409);
 
     const passwordHash = bcrypt.hashSync(password, 10);
+    const allowedRole = ['user', 'merchant'].includes(role) ? role : 'user';
     db.prepare(
-      `UPDATE users SET full_name = ?, password_hash = ?, updated_at = datetime('now') WHERE id = ?`
-    ).run(fullName, passwordHash, existing.id);
+      `UPDATE users SET full_name = ?, password_hash = ?, role = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(fullName, passwordHash, allowedRole, existing.id);
+
+    if (allowedRole === 'merchant') {
+      const merchant = db.prepare('SELECT id FROM merchants WHERE user_id = ?').get(existing.id);
+      if (!merchant) {
+        const merchantId = generateId('mrc');
+        const name = String(businessName || '').trim() || `${fullName}'s Business`;
+        const type = String(businessType || '').trim() || 'Retail';
+        const gst = String(gstin || '').trim().toUpperCase() || null;
+        const locationNote = city ? `City: ${String(city).trim()}` : null;
+        db.prepare(
+          `INSERT INTO merchants (id, user_id, business_name, business_type, gstin, available_settlement)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        ).run(merchantId, existing.id, name, locationNote ? `${type} · ${locationNote}` : type, gst, 0);
+      }
+    }
 
     const code = issueRegisterOtp(mobile);
     return success(

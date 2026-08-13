@@ -19,8 +19,8 @@ export default function Login() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { login, logout, user } = useAuth();
-  const initialIntent = normalizeAccountIntent(searchParams.get('type') || searchParams.get('account')) || 'personal';
-  const [accountType, setAccountType] = useState(initialIntent);
+  const initialIntent = normalizeAccountIntent(searchParams.get('type') || searchParams.get('account'));
+  const [accountType, setAccountType] = useState(initialIntent); // null | 'personal' | 'business'
   const [mode, setMode] = useState('otp');
   const [otpSent, setOtpSent] = useState(false);
   const [otpIdentifier, setOtpIdentifier] = useState('');
@@ -147,6 +147,7 @@ export default function Login() {
   };
 
   const isBusiness = accountType === 'business';
+  const registerType = accountType || 'personal';
 
   return (
     <div className="flex min-h-dvh min-h-screen flex-col bg-white pb-[env(safe-area-inset-bottom)]">
@@ -162,10 +163,15 @@ export default function Login() {
       <main className="flex flex-1 items-start justify-center px-4 py-8 sm:py-12">
         <div className="fade-up w-full max-w-md">
           <h1 className="text-center font-display text-[1.75rem] font-extrabold leading-tight text-[#001c64] sm:text-3xl">
-            {isBusiness ? 'Business log in' : 'Log in'}
+            {isBusiness ? 'Business log in' : accountType === 'personal' ? 'Personal log in' : 'Log in'}
           </h1>
           <p className="mt-2 px-1 text-center text-sm leading-5 text-slate-500">
-            {isBusiness ? 'Merchant dashboard' : 'Personal wallet'} ·{' '}
+            {isBusiness
+              ? 'Merchant dashboard'
+              : accountType === 'personal'
+                ? 'Personal wallet'
+                : 'We’ll open Personal or Business based on your account'}
+            {' · '}
             <button
               type="button"
               onClick={() => selectAccountType(isBusiness ? 'personal' : 'business')}
@@ -177,7 +183,7 @@ export default function Login() {
           <p className="mt-1 text-center text-sm text-slate-500">
             New here?{' '}
             <Link
-              to={`/register?type=${accountType}`}
+              to={`/register?type=${registerType}`}
               className="inline-flex min-h-[44px] items-center font-bold text-[#0070ba] hover:underline sm:min-h-0"
             >
               Sign up

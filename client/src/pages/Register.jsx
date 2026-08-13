@@ -495,7 +495,7 @@ export default function Register() {
       const { token, user } = response.data.data;
       login(token, user);
       toast.success(isBusiness ? 'Business account ready!' : 'Welcome to India Pay Now!');
-      navigate(destinationForLogin(user, isBusiness ? 'business' : 'personal'), { replace: true });
+      navigate(destinationForLogin(user, user.role === 'merchant' ? 'business' : 'personal'), { replace: true });
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {

@@ -18,7 +18,7 @@ export const destinationForRole = (role) => {
 
 /**
  * Pick post-login home from account intent + actual role.
- * Prevents personal logins landing on business (and vice versa) via stale redirects.
+ * Merchant accounts always open Business unless user explicitly chose Personal wallet.
  */
 export const destinationForLogin = (user, intent, redirectPath) => {
   const role = user?.role;
@@ -31,24 +31,29 @@ export const destinationForLogin = (user, intent, redirectPath) => {
       if (redirectPath.startsWith('/business') || redirectPath.startsWith('/app')) return redirectPath;
       return null;
     }
-    // personal users may only land in /app*
     if (redirectPath.startsWith('/app')) return redirectPath;
     return null;
   })();
 
+  // Explicit business portal request
   if (intent === 'business') {
     if (role === 'merchant') return safeRedirect?.startsWith('/business') ? safeRedirect : '/business';
-    // Personal account trying business portal → merchant activation, not business dashboard
     return '/app/merchant';
   }
 
+  // Explicit personal wallet request (even for merchants)
   if (intent === 'personal') {
-    // Always prefer personal wallet when user explicitly chose Personal
+    if (role === 'merchant') return safeRedirect?.startsWith('/app') ? safeRedirect : '/app';
     return safeRedirect?.startsWith('/app') ? safeRedirect : '/app';
   }
 
-  // No explicit intent: follow role, but never honor mismatched redirect
-  if (safeRedirect) return safeRedirect;
+  // No intent: follow account role (merchant → business, user → app)
+  if (safeRedirect) {
+    if (role === 'merchant' && safeRedirect.startsWith('/app') && !safeRedirect.startsWith('/app/merchant')) {
+      return '/business';
+    }
+    return safeRedirect;
+  }
   return destinationForRole(role);
 };
 
@@ -58,7 +63,7 @@ export const mismatchMessage = (user, intent) => {
     return 'This is a personal account. Enable business tools to open the merchant dashboard.';
   }
   if (intent === 'personal' && user.role === 'merchant') {
-    return 'Opening your personal wallet. Use Business dashboard from the sidebar for merchant tools.';
+    return 'Opening your personal wallet. Open Business from the sidebar for merchant tools.';
   }
   return null;
 };

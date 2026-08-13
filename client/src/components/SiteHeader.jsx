@@ -212,11 +212,11 @@ export function SiteHeader() {
           </nav>
 
           <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
-            <Link to="/login?type=personal" className="text-sm font-semibold text-slate-600 transition hover:text-[#111]">
+            <Link to="/login" className="text-sm font-semibold text-slate-600 transition hover:text-[#111]">
               Log In
             </Link>
             <Link
-              to="/register?type=personal"
+              to="/register"
               className="inline-flex rounded-full bg-[#111] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black"
             >
               Sign Up
@@ -269,14 +269,14 @@ export function SiteHeader() {
               </div>
             ))}
             <Link
-              to="/login?type=personal"
+              to="/login"
               onClick={closeMobile}
               className="mt-4 flex min-h-[48px] items-center rounded-xl px-3 py-3 font-bold text-[#0070ba]"
             >
               Log In
             </Link>
             <Link
-              to="/register?type=personal"
+              to="/register"
               onClick={closeMobile}
               className="mt-2 flex min-h-[48px] items-center justify-center rounded-full bg-[#111] px-3 py-3 text-center font-bold text-white"
             >
