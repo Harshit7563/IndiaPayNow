@@ -167,114 +167,124 @@ export function SiteHeader() {
   const [active, setActive] = useState(null);
 
   const closeDesktop = () => setActive(null);
+  const closeMobile = () => {
+    setOpen(false);
+    setMobileMenu(null);
+  };
   const toggleMenu = (label) => setActive((current) => (current === label ? null : label));
 
   return (
     <>
-      {active && (
+      {active ? (
         <button type="button" className="fixed inset-0 z-30" aria-label="Close menu" onClick={closeDesktop} />
-      )}
-      <header className="relative sticky top-0 z-40 border-b border-black/5 bg-[#f7f8fa]/90 backdrop-blur pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:h-16 sm:gap-4 sm:px-4 lg:px-6">
-        <Link to="/" aria-label="India Pay Now home" className="min-w-0 shrink">
-          <Logo size="sm" />
-        </Link>
+      ) : null}
 
-        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
-          {menus.map((menu, index) => {
-            const align = index >= 4 ? 'right' : index === 0 ? 'left' : 'center';
-            return (
-              <div key={menu.label} className="relative">
-                <button
-                  type="button"
-                  aria-expanded={active === menu.label}
-                  onClick={() => toggleMenu(menu.label)}
-                  className={`inline-flex items-center gap-0.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold ${
-                    active === menu.label ? 'bg-white text-black shadow-sm' : 'text-black hover:bg-white/70'
-                  }`}
-                >
-                  {menu.label}
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 text-black transition ${active === menu.label ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {active === menu.label && (
-                  <NavMegaMenu menu={menu} onNavigate={closeDesktop} align={align} />
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
-          <Link to="/login?type=personal" className="text-sm font-semibold text-slate-600 transition hover:text-[#111]">
-            Log In
+      <header className="sticky top-0 z-40 border-b border-black/5 bg-[#f7f8fa]/95 backdrop-blur pt-[env(safe-area-inset-top)]">
+        <div className="relative z-40 mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:h-16 sm:gap-4 sm:px-4 lg:px-6">
+          <Link to="/" aria-label="India Pay Now home" className="min-w-0 shrink">
+            <Logo size="sm" />
           </Link>
-          <Link
-            to="/register?type=personal"
-            className="inline-flex rounded-full bg-[#111] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+
+          <nav className="relative hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+            {menus.map((menu, index) => {
+              const align = index >= 4 ? 'right' : index === 0 ? 'left' : 'center';
+              return (
+                <div key={menu.label} className="relative">
+                  <button
+                    type="button"
+                    aria-expanded={active === menu.label}
+                    onClick={() => toggleMenu(menu.label)}
+                    className={`inline-flex items-center gap-0.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold ${
+                      active === menu.label ? 'bg-white text-black shadow-sm' : 'text-black hover:bg-white/70'
+                    }`}
+                  >
+                    {menu.label}
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 text-black transition ${active === menu.label ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {active === menu.label ? (
+                    <NavMegaMenu menu={menu} onNavigate={closeDesktop} align={align} />
+                  ) : null}
+                </div>
+              );
+            })}
+          </nav>
+
+          <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
+            <Link to="/login?type=personal" className="text-sm font-semibold text-slate-600 transition hover:text-[#111]">
+              Log In
+            </Link>
+            <Link
+              to="/register?type=personal"
+              className="inline-flex rounded-full bg-[#111] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black"
+            >
+              Sign Up
+            </Link>
+          </div>
+
+          <button
+            type="button"
+            className="relative z-50 ml-auto flex h-11 w-11 items-center justify-center rounded-full p-2 lg:hidden"
+            onClick={() => setOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={open}
           >
-            Sign Up
-          </Link>
+            <Menu className="h-6 w-6 text-black" />
+          </button>
         </div>
+      </header>
 
-        <button
-          className="ml-auto flex h-11 w-11 items-center justify-center rounded-full p-2 lg:hidden"
-          onClick={() => setOpen(true)}
-          aria-label="Menu"
-        >
-          <Menu className="h-6 w-6 text-black" />
-        </button>
-      </div>
-
-      {open && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
-          <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4 pt-[env(safe-area-inset-top)] sm:h-[72px]">
+      {open ? (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-white lg:hidden" role="dialog" aria-modal="true">
+          <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 px-4 pt-[env(safe-area-inset-top)] sm:h-16">
             <Logo size="sm" />
             <button
-              onClick={() => setOpen(false)}
-              aria-label="Close"
-              className="flex h-11 w-11 items-center justify-center"
+              type="button"
+              onClick={closeMobile}
+              aria-label="Close menu"
+              className="flex h-11 w-11 items-center justify-center rounded-full"
             >
               <X className="h-6 w-6 text-black" />
             </button>
           </div>
-          <div className="p-4 pb-28">
+          <div className="flex-1 overflow-y-auto p-4 pb-[max(7rem,env(safe-area-inset-bottom))]">
             {menus.map((menu) => (
               <div key={menu.label} className="border-b border-slate-100">
                 <button
                   type="button"
                   onClick={() => setMobileMenu(mobileMenu === menu.label ? null : menu.label)}
-                  className="flex w-full items-center justify-between py-3.5 text-left text-base font-semibold text-black"
+                  className="flex min-h-[48px] w-full items-center justify-between py-3.5 text-left text-base font-semibold text-black"
                 >
                   {menu.label}
-                  <ChevronDown className={`h-4 w-4 text-black transition ${mobileMenu === menu.label ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 text-black transition ${mobileMenu === menu.label ? 'rotate-180' : ''}`}
+                  />
                 </button>
-                {mobileMenu === menu.label && (
+                {mobileMenu === menu.label ? (
                   <div className="pb-4">
-                    <MenuPanel menu={menu} onNavigate={() => setOpen(false)} />
+                    <MenuPanel menu={menu} onNavigate={closeMobile} />
                   </div>
-                )}
+                ) : null}
               </div>
             ))}
             <Link
               to="/login?type=personal"
-              onClick={() => setOpen(false)}
-              className="mt-4 block rounded-xl px-3 py-3 font-bold text-brand-600"
+              onClick={closeMobile}
+              className="mt-4 flex min-h-[48px] items-center rounded-xl px-3 py-3 font-bold text-[#0070ba]"
             >
               Log In
             </Link>
             <Link
               to="/register?type=personal"
-              onClick={() => setOpen(false)}
-              className="mt-2 block rounded-full bg-[#111] px-3 py-3 text-center font-bold text-white"
+              onClick={closeMobile}
+              className="mt-2 flex min-h-[48px] items-center justify-center rounded-full bg-[#111] px-3 py-3 text-center font-bold text-white"
             >
               Sign Up
             </Link>
           </div>
         </div>
-      )}
-    </header>
+      ) : null}
     </>
   );
 }
