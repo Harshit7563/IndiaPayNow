@@ -11,12 +11,28 @@ export const generateTxnId = () => {
   return `IPN${ts}${rand}`;
 };
 
-export const generateUpiId = (name) => {
-  const base = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '')
-    .slice(0, 12);
-  return `${base || 'user'}@indpaynow`;
+export const generateUpiId = (name, { isTaken } = {}) => {
+  const base =
+    String(name || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .slice(0, 12) || 'user';
+
+  const candidate = (suffix = '') => {
+    if (!suffix) return `${base}@indpaynow`;
+    const room = Math.max(1, 12 - String(suffix).length);
+    return `${base.slice(0, room)}${suffix}@indpaynow`;
+  };
+
+  let upi = candidate();
+  if (!isTaken || !isTaken(upi)) return upi;
+
+  for (let i = 2; i < 1000; i += 1) {
+    upi = candidate(String(i));
+    if (!isTaken(upi)) return upi;
+  }
+
+  return candidate(Math.random().toString(36).slice(2, 6));
 };
 
 export const generateSlug = () => Math.random().toString(36).slice(2, 10);

@@ -4,7 +4,7 @@ import { Logo } from './Logo';
 const columns = [
   ['Company', ['About Us', 'Careers', 'Press', 'Blog']],
   ['Features', ['Send Money', 'Bill Payments', 'Recharges', 'Smart Wallet']],
-  ['Business', ['Payment Links', 'Merchant QR', 'Settlements', 'Developer APIs']],
+  ['Business', ['Exports', 'Payment Links', 'Merchant QR', 'Settlements', 'Developer APIs']],
   ['Accounts', ['Personal', 'Business', 'Savings']],
   ['Lifestyle', ['Rewards', 'Insurance', 'Donations']],
 ];
@@ -18,6 +18,7 @@ const pageLinks = {
   'Bill Payments': '/features/bill-payments',
   Recharges: '/features/recharges',
   'Smart Wallet': '/features/smart-wallet',
+  Exports: '/for-business/exports',
   'Payment Links': '/for-business/payment-links',
   'Merchant QR': '/for-business/merchant-qr',
   Settlements: '/for-business/settlements',
@@ -36,6 +37,7 @@ const appLinks = {
   'Bill Payments': '/app?service=electricity',
   Recharges: '/app?service=mobile',
   'Smart Wallet': '/app',
+  Exports: '/for-business/exports',
   'Payment Links': '/app/merchant',
   'Merchant QR': '/app/merchant',
   Settlements: '/app/merchant',

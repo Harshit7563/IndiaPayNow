@@ -8,6 +8,8 @@ import { marketingPages } from '../data/marketingPages';
 export default function MarketingPage() {
   const { pathname } = useLocation();
   const page = marketingPages[pathname];
+  const accountType =
+    pathname.includes('/business') || page?.section === 'Business' ? 'business' : 'personal';
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -94,7 +96,7 @@ export default function MarketingPage() {
                   }`}
                 >
                   <span>{item}</span>
-                  <Link to="/register" className="text-[#0070ba] hover:underline">
+                  <Link to={`/register?type=${accountType}`} className="text-[#0070ba] hover:underline">
                     Apply →
                   </Link>
                 </li>
@@ -114,13 +116,13 @@ export default function MarketingPage() {
         </p>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link
-            to="/register"
+            to={`/register?type=${accountType}`}
             className="inline-flex rounded-full bg-white px-7 py-3 text-sm font-bold text-[#111] transition hover:bg-slate-100"
           >
             Get started
           </Link>
           <Link
-            to="/login"
+            to={`/login?type=${accountType}`}
             className="inline-flex rounded-full border border-white/30 px-7 py-3 text-sm font-bold text-white transition hover:bg-white/10"
           >
             Log in

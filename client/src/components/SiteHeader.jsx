@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Code2,
   Fingerprint,
+  Globe2,
   IdCard,
   Landmark,
   Link2,
@@ -73,13 +74,15 @@ const menus = [
   },
   {
     label: 'For Business',
-    href: '/for-business/payment-links',
+    href: '/for-business/exports',
     links: [
+      ['Exports', '/for-business/exports', Globe2],
       ['Payment Links', '/for-business/payment-links', Link2],
       ['Merchant QR', '/for-business/merchant-qr', QrCode],
       ['Settlements', '/for-business/settlements', Building2],
       ['Developer APIs', '/for-business/developer-apis', Code2],
-      ['Open business account', '/register', BriefcaseBusiness],
+      ['Open business account', '/register?type=business', BriefcaseBusiness],
+      ['Business login', '/login?type=business', BriefcaseBusiness],
     ],
   },
   {
@@ -204,11 +207,11 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
-          <Link to="/login" className="text-sm font-semibold text-slate-600 transition hover:text-[#111]">
+          <Link to="/login?type=personal" className="text-sm font-semibold text-slate-600 transition hover:text-[#111]">
             Log In
           </Link>
           <Link
-            to="/register"
+            to="/register?type=personal"
             className="inline-flex rounded-full bg-[#111] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black"
           >
             Sign Up
@@ -246,11 +249,15 @@ export function SiteHeader() {
                 )}
               </div>
             ))}
-            <Link to="/login" onClick={() => setOpen(false)} className="mt-4 block rounded-xl px-3 py-3 font-bold text-brand-600">
+            <Link
+              to="/login?type=personal"
+              onClick={() => setOpen(false)}
+              className="mt-4 block rounded-xl px-3 py-3 font-bold text-brand-600"
+            >
               Log In
             </Link>
             <Link
-              to="/register"
+              to="/register?type=personal"
               onClick={() => setOpen(false)}
               className="mt-2 block rounded-full bg-[#111] px-3 py-3 text-center font-bold text-white"
             >

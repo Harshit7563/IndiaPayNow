@@ -12,6 +12,7 @@ import {
   Droplets,
   Ellipsis,
   Fingerprint,
+  Globe2,
   Hotel,
   IdCard,
   Landmark,
@@ -85,10 +86,12 @@ const menus = [
   {
     label: 'For Business',
     links: [
+      ['Exports', '/for-business/exports', Globe2],
       ['Merchant Hub', '/app/merchant', BriefcaseBusiness],
-      ['Payment Links', '/business/payment-links', Link2],
-      ['QR Payments', '/business/qr', QrCode],
-      ['Settlements', '/business/settlements', Landmark],
+      ['Payment Links', '/app/merchant', Link2],
+      ['QR Payments', '/app/merchant', QrCode],
+      ['Settlements', '/app/merchant', Landmark],
+      ['Open business login', '/login?type=business&switch=1', Code2],
     ],
   },
   {

@@ -4,6 +4,7 @@ import {
   login,
   verifyOtp,
   requestOtpLogin,
+  resendOtp,
   me,
   registerValidators,
   loginValidators,
@@ -83,6 +84,7 @@ router.post('/auth/register', registerValidators, validate, auditLog('register',
 router.post('/auth/login', loginValidators, validate, auditLog('login', 'user'), login);
 router.post('/auth/verify-otp', verifyOtp);
 router.post('/auth/otp-login', requestOtpLogin);
+router.post('/auth/resend-otp', resendOtp);
 router.get('/auth/me', authenticate, me);
 
 // User

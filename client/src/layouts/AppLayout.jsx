@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Menu, QrCode, Receipt, Send, User, Wallet } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { AppChrome } from '../components/AppChrome';
@@ -43,7 +43,9 @@ export function AppLayout() {
 export function BusinessLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
+  const isDevelopers = location.pathname.startsWith('/business/developers');
   const uniqueLinks = [
     ['Overview', '/business', true],
     ['Payments', '/business/payments'],
@@ -82,7 +84,13 @@ export function BusinessLayout() {
           </nav>
           <div className="border-t border-slate-100 pt-4">
             <Link to="/app" className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-              <Wallet className="h-4 w-4" /> Personal
+              <Wallet className="h-4 w-4" /> Personal wallet
+            </Link>
+            <Link
+              to="/login?type=personal&switch=1"
+              className="mt-1 flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              Switch to personal login
             </Link>
             <button
               onClick={() => {
@@ -131,7 +139,7 @@ export function BusinessLayout() {
             </div>
           </div>
         )}
-        <main className="mx-auto max-w-6xl p-4 md:p-6">
+        <main className={isDevelopers ? 'w-full p-0' : 'mx-auto max-w-6xl p-4 md:p-6'}>
           <Outlet />
         </main>
       </div>

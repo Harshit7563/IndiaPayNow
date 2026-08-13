@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useSearchParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext';
 import { AppLayout, BusinessLayout, AdminLayout } from './layouts/AppLayout';
@@ -31,7 +31,7 @@ import MerchantQR from './pages/business/MerchantQR';
 import Settlements from './pages/business/Settlements';
 import BusinessRefunds from './pages/business/Refunds';
 import Reports from './pages/business/Reports';
-import Developers from './pages/business/Developers';
+import Developers from './pages/business/DeveloperConsole';
 import BusinessSettings from './pages/business/Settings';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
@@ -45,6 +45,7 @@ import AdminApiLogs from './pages/admin/ApiLogs';
 import AdminSettings from './pages/admin/Settings';
 import MarketingPage from './pages/MarketingPage';
 import { marketingPagePaths } from './data/marketingPages';
+import { destinationForLogin, normalizeAccountIntent } from './utils/authRouting';
 
 function ProtectedRoute({ roles }) {
   const { user, loading } = useAuth();
@@ -56,17 +57,29 @@ function ProtectedRoute({ roles }) {
     );
   }
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/app" replace />;
+  if (roles && !roles.includes(user.role)) {
+    // Personal accounts opening /business go to merchant activation, not a random bounce
+    if (roles.includes('merchant') && user.role === 'user') {
+      return <Navigate to="/app/merchant" replace />;
+    }
+    return <Navigate to={destinationForLogin(user)} replace />;
+  }
   return <Outlet />;
 }
 
 function PublicOnly() {
   const { user, loading } = useAuth();
+  const [searchParams] = useSearchParams();
   if (loading) return null;
-  if (user) {
-    if (user.role === 'admin') return <Navigate to="/admin" replace />;
-    if (user.role === 'merchant') return <Navigate to="/business" replace />;
-    return <Navigate to="/app" replace />;
+  const switching = searchParams.get('switch') === '1';
+  if (user && !switching) {
+    const intent = normalizeAccountIntent(searchParams.get('type') || searchParams.get('account'));
+    return (
+      <Navigate
+        to={destinationForLogin(user, intent, searchParams.get('redirect'))}
+        replace
+      />
+    );
   }
   return <Outlet />;
 }

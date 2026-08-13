@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  ArrowDownLeft,
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   Building2,
   Car,
   Check,
@@ -11,6 +13,7 @@ import {
   Home,
   Landmark,
   Plus,
+  QrCode,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -22,6 +25,14 @@ import {
 import { SiteHeader } from '../components/SiteHeader';
 import { SiteFooter } from '../components/SiteFooter';
 import { serviceCatalog } from '../data/services';
+import { mobilePlans } from '../data/recharge';
+
+const telecomBrands = [
+  { name: 'Jio', src: '/logos/jio.svg', accent: '#0A2885' },
+  { name: 'Airtel', src: '/logos/airtel.svg', accent: '#ED1D24' },
+  { name: 'Vi', src: '/logos/vi.svg', accent: '#EE2737' },
+  { name: 'BSNL', src: '/logos/bsnl.svg', accent: '#003399' },
+];
 
 const featurePills = ['Send money', 'Bill pay', 'Recharges', 'Business'];
 
@@ -103,18 +114,100 @@ function getPopupServices(catalogId) {
   return group.items;
 }
 
-const cardStyles = [
-  { bg: 'from-[#dbe4ee] to-[#c5d0dc]', brand: 'text-slate-800', visa: 'text-slate-900' },
-  { bg: 'from-[#111111] to-[#2a2a2a]', brand: 'text-white', visa: 'text-white' },
-  { bg: 'from-[#b9d9f5] to-[#8ec4ef]', brand: 'text-slate-900', visa: 'text-slate-900' },
+const paymentCards = [
+  {
+    id: 'classic',
+    name: 'Classic',
+    holder: 'HARSHIT SHARMA',
+    last4: '4521',
+    expiry: '08/29',
+    network: 'RuPay',
+    panel: 'bg-[linear-gradient(135deg,#e8eef4_0%,#c5d0dc_42%,#a8b8c8_100%)]',
+    text: 'text-slate-800',
+    muted: 'text-slate-600',
+    chip: 'from-[#f3e0a8] via-[#d4af37] to-[#b8860b]',
+    gloss: 'rgba(255,255,255,0.45)',
+  },
+  {
+    id: 'black',
+    name: 'Black',
+    holder: 'PRIYA MEHTA',
+    last4: '8890',
+    expiry: '11/28',
+    network: 'Visa',
+    panel: 'bg-[linear-gradient(145deg,#1a1a1a_0%,#0d0d0d_45%,#2c2c2c_100%)]',
+    text: 'text-white',
+    muted: 'text-white/60',
+    chip: 'from-[#f5e6b8] via-[#c9a227] to-[#8a7010]',
+    gloss: 'rgba(255,255,255,0.12)',
+  },
+  {
+    id: 'ocean',
+    name: 'Ocean',
+    holder: 'RAHUL VERMA',
+    last4: '3147',
+    expiry: '03/30',
+    network: 'Visa',
+    panel: 'bg-[linear-gradient(135deg,#0a4d8c_0%,#0070ba_48%,#5ba3d9_100%)]',
+    text: 'text-white',
+    muted: 'text-white/70',
+    chip: 'from-[#fff1c2] via-[#e0c35a] to-[#b8952a]',
+    gloss: 'rgba(255,255,255,0.22)',
+  },
 ];
+
+function ContactlessIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path
+        d="M7.5 8.2c1.6 1.5 1.6 6.1 0 7.6M11 6c2.6 2.3 2.6 9.7 0 12M14.5 3.8c3.6 3.1 3.6 13.3 0 16.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function NetworkMark({ network, className = '' }) {
+  if (network === 'RuPay') {
+    return (
+      <span className={`font-display text-base font-extrabold tracking-tight ${className}`}>
+        RuPay
+      </span>
+    );
+  }
+  return (
+    <svg viewBox="0 0 60 20" className={className} aria-label="Visa">
+      <text
+        x="0"
+        y="16"
+        fill="currentColor"
+        fontFamily="Georgia, serif"
+        fontStyle="italic"
+        fontWeight="700"
+        fontSize="18"
+        letterSpacing="1"
+      >
+        VISA
+      </text>
+    </svg>
+  );
+}
 
 export default function Landing() {
   const [featureIndex, setFeatureIndex] = useState(0);
   const [cardIndex, setCardIndex] = useState(1);
   const [activeServices, setActiveServices] = useState(null);
+  const [rechargeOpen, setRechargeOpen] = useState(false);
+  const [rechargeOperator, setRechargeOperator] = useState('Jio');
+  const [rechargeMobile, setRechargeMobile] = useState('');
 
   const popupItems = activeServices ? getPopupServices(activeServices.catalogId) : [];
+  const openRecharge = (operator = 'Jio') => {
+    setRechargeOperator(operator);
+    setRechargeOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#f7f8fa] text-[#111111]">
@@ -149,49 +242,98 @@ export default function Landing() {
           </div>
 
           <div className="fade-up flex flex-col gap-4" style={{ animationDelay: '80ms' }}>
-            <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0a0a0a] p-5 text-white shadow-[0_20px_50px_rgba(0,0,0,0.18)] sm:p-6">
-              <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-[#0070ba]/35 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-12 left-8 h-32 w-32 rounded-full bg-[#5ba3d9]/25 blur-3xl" />
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.1)] sm:rounded-[2rem]">
+              {/* Balance header */}
+              <div className="relative overflow-hidden bg-[linear-gradient(145deg,#0070ba_0%,#003087_55%,#001c64_100%)] px-5 pb-6 pt-5 text-white sm:px-6 sm:pt-6">
+                <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+                <div className="pointer-events-none absolute -bottom-12 left-10 h-28 w-28 rounded-full bg-[#5ba3d9]/30 blur-2xl" />
 
-              <div className="relative flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Your wallet</p>
-                  <p className="mt-2 font-display text-3xl font-extrabold tracking-tight">₹12,580.50</p>
-                  <p className="mt-1 text-xs text-slate-400">Available balance</p>
-                </div>
-                <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-[#9fd0f5] ring-1 ring-white/10">
-                  ● Online
-                </span>
-              </div>
-
-              <div className="relative mt-5 grid grid-cols-2 gap-2">
-                <div className="rounded-2xl bg-white py-2.5 text-center text-sm font-bold text-[#111]">Send</div>
-                <div className="rounded-2xl border border-white/20 py-2.5 text-center text-sm font-bold text-white">
-                  Request
-                </div>
-              </div>
-
-              <div className="relative mt-5 space-y-3 rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
-                {[
-                  ['RV', 'Rahul Verma', 'Sent just now', '-₹500', '#0070ba'],
-                  ['PS', 'Priya Store', 'Payment received', '+₹1,200', '#059669'],
-                ].map(([initials, name, meta, amount, color]) => (
-                  <div key={name} className="flex items-center gap-3">
-                    <span
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
-                      style={{ background: color }}
-                    >
-                      {initials}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{name}</p>
-                      <p className="text-[11px] text-slate-400">{meta}</p>
-                    </div>
-                    <p className={`text-sm font-bold ${amount.startsWith('+') ? 'text-emerald-400' : 'text-white'}`}>
-                      {amount}
+                <div className="relative flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/70">Your wallet</p>
+                    <p className="mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-[2.15rem]">
+                      ₹12,580.50
                     </p>
+                    <p className="mt-1 text-xs text-white/65">Available balance · UPI linked</p>
                   </div>
-                ))}
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-emerald-200 ring-1 ring-white/20 backdrop-blur">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                    Online
+                  </span>
+                </div>
+
+                <div className="relative mt-5 grid grid-cols-3 gap-2">
+                  {[
+                    [ArrowUpRight, 'Send'],
+                    [ArrowDownLeft, 'Request'],
+                    [QrCode, 'Scan'],
+                  ].map(([Icon, label]) => (
+                    <Link
+                      key={label}
+                      to="/register"
+                      className="flex flex-col items-center gap-1.5 rounded-2xl bg-white/12 py-3 text-center ring-1 ring-white/15 transition hover:bg-white/20"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#003087]">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-bold text-white">{label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Activity */}
+              <div className="px-4 py-4 sm:px-5 sm:py-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-bold text-[#111]">Recent activity</p>
+                  <Link to="/register" className="text-xs font-semibold text-[#0070ba] hover:underline">
+                    See all
+                  </Link>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    {
+                      initials: 'RV',
+                      name: 'Rahul Verma',
+                      meta: 'UPI · Just now',
+                      amount: '-₹500',
+                      tone: 'bg-[#e8f4ff] text-[#0070ba]',
+                      amountTone: 'text-[#111]',
+                    },
+                    {
+                      initials: 'PS',
+                      name: 'Priya Store',
+                      meta: 'QR payment · 2 min ago',
+                      amount: '+₹1,200',
+                      tone: 'bg-emerald-50 text-emerald-700',
+                      amountTone: 'text-emerald-600',
+                    },
+                    {
+                      initials: 'JM',
+                      name: 'Jio Recharge',
+                      meta: 'Prepaid · Today',
+                      amount: '-₹299',
+                      tone: 'bg-[#eef2ff] text-[#4f46e5]',
+                      amountTone: 'text-[#111]',
+                    },
+                  ].map((row) => (
+                    <div
+                      key={row.name}
+                      className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-[#f8fafc] px-3 py-2.5"
+                    >
+                      <span
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${row.tone}`}
+                      >
+                        {row.initials}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-[#111]">{row.name}</p>
+                        <p className="text-[11px] text-slate-500">{row.meta}</p>
+                      </div>
+                      <p className={`text-sm font-extrabold ${row.amountTone}`}>{row.amount}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -242,6 +384,138 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Global payments */}
+      <section id="exports" className="mx-auto max-w-6xl px-4 py-14 text-center md:py-16">
+        <p className="text-sm font-semibold text-[#5ba3d9]">Global payments</p>
+        <h2 className="mx-auto mt-2 max-w-2xl font-display text-3xl font-extrabold tracking-tight md:text-4xl">
+          Send and receive{' '}
+          <span className="text-slate-400">across countries</span>
+        </h2>
+        <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-500 md:text-[15px]">
+          Move money between India and the world — simple, fast, and clear.
+        </p>
+
+        <div className="mx-auto mt-8 max-w-5xl overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white text-left shadow-[0_12px_40px_rgba(15,23,42,0.06)] md:rounded-[1.75rem]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-[#f8fafc] px-5 py-4 sm:px-7">
+            <div>
+              <p className="text-sm font-bold text-[#111]">Recent cross-border activity</p>
+              <p className="mt-0.5 text-xs text-slate-500">Live demo · last 7 days</p>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+              4 settled
+            </span>
+          </div>
+
+          <div className="hidden grid-cols-[1.4fr_1fr_1fr_auto] gap-4 border-b border-slate-100 px-7 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:grid">
+            <span>Country / counterparty</span>
+            <span>Type · currency</span>
+            <span>Reference</span>
+            <span className="text-right">Amount (INR)</span>
+          </div>
+
+          {[
+            {
+              flag: '🇦🇪',
+              place: 'Dubai, UAE',
+              party: 'Al Noor Trading LLC',
+              meta: 'Received · AED 800',
+              ref: 'TXN-AE-2041',
+              when: 'Today · 10:24 AM',
+              amount: '+₹18,420',
+              status: 'Completed',
+              tone: 'text-emerald-600',
+              statusTone: 'bg-emerald-50 text-emerald-700',
+            },
+            {
+              flag: '🇺🇸',
+              place: 'United States',
+              party: 'Nova Labs Inc.',
+              meta: 'Sent · USD 150',
+              ref: 'TXN-US-1988',
+              when: 'Yesterday · 6:12 PM',
+              amount: '-₹12,500',
+              status: 'Sent',
+              tone: 'text-[#111]',
+              statusTone: 'bg-slate-100 text-slate-600',
+            },
+            {
+              flag: '🇬🇧',
+              place: 'United Kingdom',
+              party: 'Bright Design Studio',
+              meta: 'Received · GBP 95',
+              ref: 'TXN-GB-1872',
+              when: '12 Aug · 2:05 PM',
+              amount: '+₹9,860',
+              status: 'Completed',
+              tone: 'text-emerald-600',
+              statusTone: 'bg-emerald-50 text-emerald-700',
+            },
+            {
+              flag: '🇸🇬',
+              place: 'Singapore',
+              party: 'Pacific Soft Pte Ltd',
+              meta: 'Received · SGD 100',
+              ref: 'TXN-SG-1755',
+              when: '11 Aug · 9:40 AM',
+              amount: '+₹6,240',
+              status: 'Completed',
+              tone: 'text-emerald-600',
+              statusTone: 'bg-emerald-50 text-emerald-700',
+            },
+          ].map((row, idx, arr) => (
+            <div
+              key={row.ref}
+              className={`grid grid-cols-1 items-center gap-3 px-5 py-4 sm:grid-cols-[1.4fr_1fr_1fr_auto] sm:gap-4 sm:px-7 sm:py-5 ${
+                idx < arr.length - 1 ? 'border-b border-slate-100' : ''
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f1f5f9] text-xl">
+                  {row.flag}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#111]">{row.place}</p>
+                  <p className="truncate text-xs text-slate-500">{row.party}</p>
+                </div>
+              </div>
+
+              <div className="min-w-0 pl-14 sm:pl-0">
+                <p className="text-sm font-medium text-[#111]">{row.meta}</p>
+                <p className="text-xs text-slate-500">{row.when}</p>
+              </div>
+
+              <div className="min-w-0 pl-14 sm:pl-0">
+                <p className="font-mono text-xs font-semibold text-slate-600">{row.ref}</p>
+                <span
+                  className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.statusTone}`}
+                >
+                  {row.status}
+                </span>
+              </div>
+
+              <p className={`pl-14 text-base font-extrabold tracking-tight sm:pl-0 sm:text-right ${row.tone}`}>
+                {row.amount}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/register"
+            className="inline-flex items-center gap-2 rounded-full bg-[#111] px-7 py-3 text-sm font-bold text-white transition hover:bg-black"
+          >
+            Get started <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/for-business/exports"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-7 py-3 text-sm font-bold text-[#111] transition hover:bg-slate-50"
+          >
+            Learn more
+          </Link>
+        </div>
+      </section>
+
       {/* Features */}
       <section id="personal" className="mx-auto max-w-6xl px-4 py-16 md:py-20">
         <div className="text-center">
@@ -255,21 +529,28 @@ export default function Landing() {
         <div className="mt-10 grid gap-4 md:grid-cols-3 md:gap-5">
           <div className="rounded-[1.75rem] bg-[#111] p-6 text-white md:min-h-[280px] md:rounded-[2rem] md:p-7">
             <div className="flex -space-x-2">
-              {['H', 'R', 'P', 'A'].map((letter, i) => (
-                <span
-                  key={letter}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#111] text-sm font-bold text-white"
-                  style={{ background: ['#0070ba', '#00baf2', '#003087', '#64748b'][i] }}
+              {telecomBrands.map((brand) => (
+                <button
+                  key={brand.name}
+                  type="button"
+                  title={`${brand.name} recharge`}
+                  onClick={() => openRecharge(brand.name)}
+                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-[#111] bg-white transition hover:z-10 hover:scale-110"
                 >
-                  {letter}
-                </span>
+                  <img src={brand.src} alt={brand.name} className="h-full w-full object-cover" />
+                </button>
               ))}
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#111] bg-white text-[#111]">
+              <button
+                type="button"
+                title="Open recharge"
+                onClick={() => openRecharge('Jio')}
+                className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#111] bg-white text-[#111] transition hover:z-10 hover:scale-110 hover:bg-slate-100"
+              >
                 <Plus className="h-4 w-4" />
-              </span>
+              </button>
             </div>
             <p className="mt-10 font-display text-xl font-bold leading-snug md:mt-16">
-              No more awkward reminders — just seamless sharing.
+              Recharge any number in seconds — Jio, Airtel, Vi &amp; BSNL.
             </p>
           </div>
 
@@ -435,7 +716,7 @@ export default function Landing() {
             <button
               type="button"
               aria-label="Previous card"
-              onClick={() => setCardIndex((v) => (v + cardStyles.length - 1) % cardStyles.length)}
+              onClick={() => setCardIndex((v) => (v + paymentCards.length - 1) % paymentCards.length)}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-50"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -443,7 +724,7 @@ export default function Landing() {
             <button
               type="button"
               aria-label="Next card"
-              onClick={() => setCardIndex((v) => (v + 1) % cardStyles.length)}
+              onClick={() => setCardIndex((v) => (v + 1) % paymentCards.length)}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-50"
             >
               <ArrowRight className="h-4 w-4" />
@@ -451,27 +732,86 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          {cardStyles.map((style, i) => (
-            <div
-              key={style.bg}
-              className={`relative aspect-[1.6/1] overflow-hidden rounded-3xl bg-gradient-to-br p-6 shadow-lg transition ${style.bg} ${
-                i === cardIndex ? 'scale-[1.02] ring-2 ring-[#111]/15' : 'opacity-90'
-              }`}
-            >
-              <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,.35), transparent 45%)' }} />
-              <div className="relative flex h-full flex-col justify-between">
-                <div className="flex items-start justify-between">
-                  <div className={`h-8 w-11 rounded-md bg-gradient-to-br from-amber-200/80 to-amber-400/50 ${style.brand === 'text-white' ? 'opacity-90' : ''}`} />
-                  <span className={`text-lg ${style.brand}`}>))) </span>
+        <div className="mt-10 grid gap-5 sm:grid-cols-3 sm:gap-6">
+          {paymentCards.map((card, i) => {
+            const active = i === cardIndex;
+            return (
+              <button
+                key={card.id}
+                type="button"
+                onClick={() => setCardIndex(i)}
+                className={`group text-left transition duration-300 ${
+                  active ? 'scale-[1.03] sm:-translate-y-1' : 'opacity-85 hover:opacity-100'
+                }`}
+              >
+                <div
+                  className={`relative aspect-[1.586/1] overflow-hidden rounded-[1.15rem] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.18)] ring-1 ring-black/10 ${card.panel} ${
+                    active ? 'ring-2 ring-[#111]/25' : ''
+                  }`}
+                >
+                  {/* Soft gloss + texture */}
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background: `linear-gradient(125deg, ${card.gloss} 0%, transparent 42%, transparent 58%, rgba(0,0,0,0.12) 100%)`,
+                    }}
+                  />
+                  <div
+                    className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full opacity-30 blur-2xl"
+                    style={{ background: card.gloss }}
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-[0.07]"
+                    style={{
+                      backgroundImage:
+                        'repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.35) 2px, rgba(255,255,255,0.35) 3px)',
+                    }}
+                  />
+
+                  <div className={`relative flex h-full flex-col justify-between ${card.text}`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`h-9 w-[2.85rem] rounded-[0.35rem] bg-gradient-to-br shadow-sm ring-1 ring-black/10 ${card.chip}`}
+                          style={{
+                            backgroundImage:
+                              'linear-gradient(135deg, rgba(255,255,255,0.45) 0%, transparent 40%), linear-gradient(90deg, transparent 45%, rgba(0,0,0,0.12) 46%, transparent 55%)',
+                          }}
+                        />
+                        <ContactlessIcon className={`h-6 w-6 ${card.muted}`} />
+                      </div>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${card.muted} bg-black/5`}>
+                        {card.name}
+                      </span>
+                    </div>
+
+                    <div>
+                      <p className="font-mono text-[15px] font-semibold tracking-[0.18em] sm:text-base">
+                        •••• •••• •••• {card.last4}
+                      </p>
+                      <div className="mt-3 flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className={`text-[9px] font-semibold uppercase tracking-[0.14em] ${card.muted}`}>
+                            Card holder
+                          </p>
+                          <p className="truncate text-xs font-bold tracking-wide sm:text-[13px]">{card.holder}</p>
+                          <p className={`mt-1 text-[10px] font-medium ${card.muted}`}>
+                            Valid thru {card.expiry}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className={`mb-1 text-[9px] font-semibold uppercase tracking-wider ${card.muted}`}>
+                            India Pay Now
+                          </p>
+                          <NetworkMark network={card.network} className={`h-5 w-14 ${card.text}`} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-end justify-between">
-                  <p className={`font-display text-sm font-bold tracking-widest ${style.brand}`}>INDIA PAY NOW</p>
-                  <p className={`text-sm font-extrabold italic tracking-tight ${style.visa}`}>VISA</p>
-                </div>
-              </div>
-            </div>
-          ))}
+              </button>
+            );
+          })}
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -512,6 +852,115 @@ export default function Landing() {
       </section>
 
       <SiteFooter />
+
+      {rechargeOpen && (
+        <div className="popup-backdrop fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-5">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-900/35 backdrop-blur-[6px]"
+            aria-label="Close recharge"
+            onClick={() => setRechargeOpen(false)}
+          />
+
+          <div className="popup-panel relative z-10 flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-[0_30px_80px_rgba(15,23,42,0.2)] ring-1 ring-slate-200/80 sm:max-w-lg sm:rounded-[2rem]">
+            <div className="relative border-b border-slate-100 bg-gradient-to-br from-[#f0f7ff] via-white to-[#f7f8fa] px-5 pb-5 pt-6 sm:px-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0070ba] shadow-sm ring-1 ring-slate-200/80">
+                    <Smartphone className="h-3.5 w-3.5" />
+                    Mobile recharge
+                  </span>
+                  <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-[#111] sm:text-3xl">
+                    Recharge in seconds
+                  </h2>
+                  <p className="mt-1.5 text-sm text-slate-500">Pick operator, enter number, choose a plan.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRechargeOpen(false)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-5 flex gap-2">
+                {telecomBrands.map((brand) => {
+                  const selected = rechargeOperator === brand.name;
+                  return (
+                    <button
+                      key={brand.name}
+                      type="button"
+                      onClick={() => setRechargeOperator(brand.name)}
+                      className={`flex flex-1 flex-col items-center gap-1.5 rounded-2xl border px-2 py-2.5 transition ${
+                        selected
+                          ? 'border-[#0070ba] bg-[#e8f4ff] ring-2 ring-[#0070ba]/15'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full">
+                        <img src={brand.src} alt="" className="h-full w-full object-cover" />
+                      </span>
+                      <span className="text-[11px] font-bold text-[#111]">{brand.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-[#f7f8fa] px-5 py-5 sm:px-6">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold text-[#111]">Mobile number</span>
+                <div className="relative">
+                  <Smartphone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={rechargeMobile}
+                    onChange={(e) => setRechargeMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="9876543210"
+                    inputMode="numeric"
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm font-semibold text-[#111] outline-none transition focus:border-[#0070ba] focus:ring-2 focus:ring-[#0070ba]/15"
+                  />
+                </div>
+              </label>
+
+              <p className="mb-2 mt-5 text-sm font-semibold text-[#111]">Popular plans · {rechargeOperator}</p>
+              <div className="space-y-2.5">
+                {mobilePlans
+                  .filter((p) => p.type === 'Popular')
+                  .map((plan) => (
+                    <Link
+                      key={`${plan.price}-${plan.data}`}
+                      to="/register"
+                      onClick={() => setRechargeOpen(false)}
+                      className="flex items-center justify-between gap-3 rounded-[1.25rem] border border-slate-200/70 bg-white p-3.5 shadow-[0_2px_10px_rgba(15,23,42,0.04)] transition hover:border-[#0070ba]/25 hover:shadow-md"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-[#111]">{plan.data}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {plan.validity} · {plan.desc}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-[#111] px-3.5 py-2 text-sm font-bold text-white">
+                        ₹{plan.price}
+                      </span>
+                    </Link>
+                  ))}
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 bg-white px-5 py-4 sm:px-6">
+              <Link
+                to="/register"
+                onClick={() => setRechargeOpen(false)}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0070ba] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_28px_rgba(0,112,186,0.28)] transition hover:bg-[#005ea6]"
+              >
+                Continue to recharge <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeServices && (
         <div className="popup-backdrop fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-5">

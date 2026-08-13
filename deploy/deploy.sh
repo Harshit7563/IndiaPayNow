@@ -66,9 +66,9 @@ else
   fi
 fi
 
-echo "==> Installing dependencies..."
+echo "==> Installing dependencies (web only)..."
 rm -rf server/node_modules/better-sqlite3 2>/dev/null || true
-npm run install:all
+npm run install:web
 
 echo "==> Building client..."
 npm run build

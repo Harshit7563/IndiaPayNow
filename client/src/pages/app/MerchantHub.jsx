@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button, Card, PageHeader } from '../../components/ui';
@@ -17,6 +17,7 @@ const tools = [
 
 export default function MerchantHub() {
   const { user, refreshUser, login } = useAuth();
+  const navigate = useNavigate();
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const payload = amount
@@ -30,6 +31,7 @@ export default function MerchantHub() {
       if (data.data?.token) login(data.data.token, data.data.user);
       else await refreshUser();
       toast.success(data.message || 'Business tools enabled');
+      navigate('/business', { replace: true });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not enable business tools');
     } finally {

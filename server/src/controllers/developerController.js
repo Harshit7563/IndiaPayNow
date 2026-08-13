@@ -113,16 +113,33 @@ export const getApiLogs = (req, res) => {
   return success(res, logs);
 };
 
-export const getDocs = (_req, res) =>
-  success(res, {
+export const getDocs = (req, res) => {
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
+  const host = req.get('x-forwarded-host') || req.get('host') || 'localhost:5001';
+  const baseUrlAbsolute = `${proto}://${host}/api`;
+
+  return success(res, {
     baseUrl: '/api',
+    baseUrlAbsolute,
     auth: 'Bearer token or X-API-Key header',
+    version: 'v1',
+    modes: ['test', 'live'],
     endpoints: [
       { method: 'POST', path: '/api/payments/create', description: 'Create a payment' },
       { method: 'GET', path: '/api/payments/:id', description: 'Get payment status' },
       { method: 'POST', path: '/api/payments/:id/refund', description: 'Refund a payment' },
       { method: 'GET', path: '/api/transactions', description: 'List transactions' },
       { method: 'POST', path: '/api/payment-links', description: 'Create payment link' },
+      { method: 'GET', path: '/api/merchant/qr', description: 'List merchant QR codes' },
+      { method: 'POST', path: '/api/settlements/request', description: 'Request settlement' },
+      { method: 'GET', path: '/api/reports', description: 'Payment reports' },
+      { method: 'POST', path: '/api/developer/webhooks', description: 'Register webhook' },
+    ],
+    webhookEvents: [
+      'payment.success',
+      'payment.failed',
+      'refund.processed',
+      'settlement.paid',
     ],
     sdks: [
       { name: 'Node.js', install: 'npm install @indiapaynow/node' },
@@ -130,3 +147,4 @@ export const getDocs = (_req, res) =>
       { name: 'PHP', install: 'composer require indiapaynow/sdk' },
     ],
   });
+};

@@ -149,12 +149,39 @@ export const marketingPages = {
       { title: 'Built for daily use', text: 'Fast enough for street payments, calm enough for family budgets.' },
     ],
   },
+  '/for-business/exports': {
+    section: 'Global collect',
+    title: 'Exports',
+    headline: 'Get paid from overseas. Settle straight to India.',
+    subtitle:
+      'Built for Indian exporters, freelancers, and platforms — accept foreign payments and credit rupees to your business bank without juggling gateways.',
+    cta: { label: 'Start collecting', to: '/register?type=business' },
+    highlights: [
+      ['One link', 'Share worldwide'],
+      ['FX clear', 'USD → INR'],
+      ['Bank settle', 'Next business day'],
+    ],
+    blocks: [
+      {
+        title: 'Collect from anywhere',
+        text: 'Share a clean checkout with overseas buyers — built for invoices, retainers, and export orders.',
+      },
+      {
+        title: 'See every inflow clearly',
+        text: 'Track foreign collections and statuses in one place instead of chasing emails and PDFs.',
+      },
+      {
+        title: 'Settle to your Indian bank',
+        text: 'Convert and credit funds to your business account with clear timelines and audit-ready history.',
+      },
+    ],
+  },
   '/for-business/payment-links': {
     section: 'Business',
     title: 'Payment Links',
     headline: 'Get paid with a link — share anywhere.',
     subtitle: 'Create payment links for invoices, services, and online orders in seconds.',
-    cta: { label: 'Create business account', to: '/register' },
+    cta: { label: 'Create business account', to: '/register?type=business' },
     highlights: [
       ['Share', 'WhatsApp & email'],
       ['Track', 'Paid / pending'],
@@ -171,7 +198,7 @@ export const marketingPages = {
     title: 'Merchant QR',
     headline: 'A QR that turns footfall into payments.',
     subtitle: 'Accept in-store payments with a branded QR and clear settlement view.',
-    cta: { label: 'Get merchant QR', to: '/register' },
+    cta: { label: 'Get merchant QR', to: '/register?type=business' },
     highlights: [
       ['Static QR', 'Print ready'],
       ['Dynamic', 'Amount QR'],
@@ -188,7 +215,7 @@ export const marketingPages = {
     title: 'Settlements',
     headline: 'Settle faster. Know where every rupee is.',
     subtitle: 'Move collected funds to your bank with transparent timelines and reports.',
-    cta: { label: 'Open merchant account', to: '/register' },
+    cta: { label: 'Open merchant account', to: '/register?type=business' },
     highlights: [
       ['T+1', 'Typical settle'],
       ['UTR', 'Tracked'],
@@ -205,7 +232,7 @@ export const marketingPages = {
     title: 'Developer APIs',
     headline: 'Payments APIs built for clean product teams.',
     subtitle: 'Create payments, webhooks, and keys with a developer experience that stays out of the way.',
-    cta: { label: 'Explore docs', to: '/register' },
+    cta: { label: 'Explore docs', to: '/register?type=business' },
     highlights: [
       ['Sandbox', 'Test mode'],
       ['Webhooks', 'Realtime'],
@@ -222,7 +249,7 @@ export const marketingPages = {
     title: 'Personal',
     headline: 'A personal account for everyday money moves.',
     subtitle: 'Send, receive, recharge, and pay bills with one trusted profile.',
-    cta: { label: 'Create personal account', to: '/register' },
+    cta: { label: 'Create personal account', to: '/register?type=personal' },
     highlights: [
       ['Free', 'To start'],
       ['KYC', 'Quick verify'],
@@ -239,7 +266,7 @@ export const marketingPages = {
     title: 'Business',
     headline: 'A business account built for collections.',
     subtitle: 'Payment links, QR, settlements, and reports for growing merchants.',
-    cta: { label: 'Open business account', to: '/register' },
+    cta: { label: 'Open business account', to: '/register?type=business' },
     highlights: [
       ['Collect', 'Links + QR'],
       ['Team', 'Ready soon'],
