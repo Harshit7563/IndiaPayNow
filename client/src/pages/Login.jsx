@@ -47,9 +47,15 @@ export default function Login() {
 
   const selectAccountType = (next) => {
     setAccountType(next);
+    setOtpSent(false);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('type', next);
     setSearchParams(nextParams, { replace: true });
+  };
+
+  const switchMode = (next) => {
+    setMode(next);
+    setOtpSent(false);
   };
 
   const update = (event) => {
@@ -140,6 +146,8 @@ export default function Login() {
     }
   };
 
+  const isBusiness = accountType === 'business';
+
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <header className="border-b border-[#e5e7eb] px-4 py-5">
@@ -152,14 +160,23 @@ export default function Login() {
 
       <main className="flex flex-1 items-start justify-center px-4 py-12">
         <div className="fade-up w-full max-w-md">
-          <h1 className="text-center font-display text-3xl font-extrabold text-[#001c64]">Log in to your account</h1>
+          <h1 className="text-center font-display text-3xl font-extrabold text-[#001c64]">
+            {isBusiness ? 'Business log in' : 'Log in'}
+          </h1>
           <p className="mt-2 text-center text-sm text-slate-500">
-            Or{' '}
-            <Link
-              to={`/register?type=${accountType}`}
+            {isBusiness ? 'Merchant dashboard access' : 'Personal wallet & payments'} ·{' '}
+            <button
+              type="button"
+              onClick={() => selectAccountType(isBusiness ? 'personal' : 'business')}
               className="font-bold text-[#0070ba] hover:underline"
             >
-              sign up
+              {isBusiness ? 'Use personal' : 'Use business'}
+            </button>
+          </p>
+          <p className="mt-1 text-center text-sm text-slate-500">
+            New here?{' '}
+            <Link to={`/register?type=${accountType}`} className="font-bold text-[#0070ba] hover:underline">
+              Sign up
             </Link>
           </p>
 
@@ -179,60 +196,7 @@ export default function Login() {
             </div>
           ) : null}
 
-          <div className="mt-8 grid grid-cols-2 gap-2 rounded-full bg-[#f7f9fa] p-1">
-            <button
-              type="button"
-              onClick={() => selectAccountType('personal')}
-              className={`rounded-full py-2.5 text-sm font-bold ${
-                accountType === 'personal' ? 'bg-white text-[#001c64] shadow-sm' : 'text-slate-500'
-              }`}
-            >
-              Personal
-            </button>
-            <button
-              type="button"
-              onClick={() => selectAccountType('business')}
-              className={`rounded-full py-2.5 text-sm font-bold ${
-                accountType === 'business' ? 'bg-white text-[#001c64] shadow-sm' : 'text-slate-500'
-              }`}
-            >
-              Business
-            </button>
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2 rounded-full bg-[#f7f9fa] p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setMode('otp');
-                setOtpSent(false);
-              }}
-              className={`rounded-full py-2.5 text-sm font-bold ${
-                mode === 'otp' ? 'bg-white text-[#001c64] shadow-sm' : 'text-slate-500'
-              }`}
-            >
-              One-time code
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('password');
-                setOtpSent(false);
-              }}
-              className={`rounded-full py-2.5 text-sm font-bold ${
-                mode === 'password' ? 'bg-white text-[#001c64] shadow-sm' : 'text-slate-500'
-              }`}
-            >
-              Password
-            </button>
-          </div>
-
           <div className="mt-8 rounded-3xl border border-[#e5e7eb] bg-white p-6 sm:p-8">
-            <p className="mb-5 text-sm text-slate-500">
-              {accountType === 'business'
-                ? 'Log in to your business / merchant dashboard.'
-                : 'Log in to your personal wallet and payments.'}
-            </p>
             {mode === 'password' ? (
               <form onSubmit={submitPassword} className="space-y-4">
                 <Input
@@ -275,12 +239,19 @@ export default function Login() {
                     Stay logged in
                   </label>
                   <Link to="/forgot-password" className="font-bold text-[#0070ba] hover:underline">
-                    Forgot password?
+                    Forgot?
                   </Link>
                 </div>
                 <Button type="submit" loading={loading} className="mt-2 w-full py-3.5">
                   Log In
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => switchMode('otp')}
+                  className="w-full pt-1 text-sm font-bold text-[#0070ba] hover:underline"
+                >
+                  Use one-time code instead
+                </button>
               </form>
             ) : !otpSent ? (
               <form onSubmit={requestOtp} className="space-y-5">
@@ -290,15 +261,23 @@ export default function Login() {
                   value={form.identifier}
                   onChange={update}
                   placeholder="Email or mobile number"
+                  autoComplete="username"
                 />
                 <Button type="submit" loading={loading} className="w-full py-3.5">
-                  Next
+                  Send code
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => switchMode('password')}
+                  className="w-full text-sm font-bold text-[#0070ba] hover:underline"
+                >
+                  Use password instead
+                </button>
               </form>
             ) : (
               <form onSubmit={verifyOtp} className="space-y-5">
                 <p className="rounded-2xl bg-[#eef5ff] p-3 text-sm text-[#003087]">
-                  Enter the code sent to your mobile. Demo OTP: <strong>123456</strong>
+                  Code sent. Demo OTP: <strong>123456</strong>
                 </p>
                 <Input
                   label="One-time code"
@@ -320,15 +299,18 @@ export default function Login() {
                   disabled={loading || resendCooldown > 0}
                   className="w-full text-sm font-bold text-[#0070ba] disabled:cursor-not-allowed disabled:text-slate-400"
                 >
-                  {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode('password')}
+                  className="w-full text-sm font-semibold text-slate-500 hover:text-[#0070ba]"
+                >
+                  Use password instead
                 </button>
               </form>
             )}
           </div>
-
-          <p className="mt-6 text-center text-xs text-slate-400">
-            Personal demo: harshit@indiapaynow.com · Business: merchant@indiapaynow.com · Password@123
-          </p>
         </div>
       </main>
     </div>
