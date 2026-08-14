@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { SiteHeader } from '../components/SiteHeader';
 import { SiteFooter } from '../components/SiteFooter';
+import { CrossBorderActivity } from '../components/CrossBorderActivity';
 import { serviceCatalog } from '../data/services';
 import { mobilePlans } from '../data/recharge';
 
@@ -395,110 +396,7 @@ export default function Landing() {
           Move money between India and the world — simple, fast, and clear.
         </p>
 
-        <div className="mx-auto mt-8 max-w-5xl overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white text-left shadow-[0_12px_40px_rgba(15,23,42,0.06)] md:rounded-[1.75rem]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-[#f8fafc] px-5 py-4 sm:px-7">
-            <div>
-              <p className="text-sm font-bold text-[#111]">Recent cross-border activity</p>
-              <p className="mt-0.5 text-xs text-slate-500">Live demo · last 7 days</p>
-            </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
-              4 settled
-            </span>
-          </div>
-
-          <div className="hidden grid-cols-[1.4fr_1fr_1fr_auto] gap-4 border-b border-slate-100 px-7 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 sm:grid">
-            <span>Country / counterparty</span>
-            <span>Type · currency</span>
-            <span>Reference</span>
-            <span className="text-right">Amount (INR)</span>
-          </div>
-
-          {[
-            {
-              flag: '🇦🇪',
-              place: 'Dubai, UAE',
-              party: 'Al Noor Trading LLC',
-              meta: 'Received · AED 800',
-              ref: 'TXN-AE-2041',
-              when: 'Today · 10:24 AM',
-              amount: '+₹18,420',
-              status: 'Completed',
-              tone: 'text-emerald-600',
-              statusTone: 'bg-emerald-50 text-emerald-700',
-            },
-            {
-              flag: '🇺🇸',
-              place: 'United States',
-              party: 'Nova Labs Inc.',
-              meta: 'Sent · USD 150',
-              ref: 'TXN-US-1988',
-              when: 'Yesterday · 6:12 PM',
-              amount: '-₹12,500',
-              status: 'Sent',
-              tone: 'text-[#111]',
-              statusTone: 'bg-slate-100 text-slate-600',
-            },
-            {
-              flag: '🇬🇧',
-              place: 'United Kingdom',
-              party: 'Bright Design Studio',
-              meta: 'Received · GBP 95',
-              ref: 'TXN-GB-1872',
-              when: '12 Aug · 2:05 PM',
-              amount: '+₹9,860',
-              status: 'Completed',
-              tone: 'text-emerald-600',
-              statusTone: 'bg-emerald-50 text-emerald-700',
-            },
-            {
-              flag: '🇸🇬',
-              place: 'Singapore',
-              party: 'Pacific Soft Pte Ltd',
-              meta: 'Received · SGD 100',
-              ref: 'TXN-SG-1755',
-              when: '11 Aug · 9:40 AM',
-              amount: '+₹6,240',
-              status: 'Completed',
-              tone: 'text-emerald-600',
-              statusTone: 'bg-emerald-50 text-emerald-700',
-            },
-          ].map((row, idx, arr) => (
-            <div
-              key={row.ref}
-              className={`grid grid-cols-1 items-center gap-3 px-5 py-4 sm:grid-cols-[1.4fr_1fr_1fr_auto] sm:gap-4 sm:px-7 sm:py-5 ${
-                idx < arr.length - 1 ? 'border-b border-slate-100' : ''
-              }`}
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f1f5f9] text-xl">
-                  {row.flag}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#111]">{row.place}</p>
-                  <p className="truncate text-xs text-slate-500">{row.party}</p>
-                </div>
-              </div>
-
-              <div className="min-w-0 pl-14 sm:pl-0">
-                <p className="text-sm font-medium text-[#111]">{row.meta}</p>
-                <p className="text-xs text-slate-500">{row.when}</p>
-              </div>
-
-              <div className="min-w-0 pl-14 sm:pl-0">
-                <p className="font-mono text-xs font-semibold text-slate-600">{row.ref}</p>
-                <span
-                  className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.statusTone}`}
-                >
-                  {row.status}
-                </span>
-              </div>
-
-              <p className={`pl-14 text-base font-extrabold tracking-tight sm:pl-0 sm:text-right ${row.tone}`}>
-                {row.amount}
-              </p>
-            </div>
-          ))}
-        </div>
+        <CrossBorderActivity />
 
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link

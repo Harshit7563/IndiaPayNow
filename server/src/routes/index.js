@@ -76,6 +76,7 @@ import db from '../db/database.js';
 import { generateId, success, fail } from '../utils/helpers.js';
 import { signToken, sanitizeUser } from '../controllers/authController.js';
 import { fetchPnrStatus } from '../services/pnrService.js';
+import { getLiveFxRates } from '../services/fxService.js';
 
 const router = Router();
 
@@ -294,5 +295,14 @@ router.get('/admin/settings', authenticate, authorize('admin'), getSettings);
 
 // Health
 router.get('/health', (_req, res) => success(res, { status: 'ok', service: 'India Pay Now API' }));
+
+router.get('/fx/rates', async (_req, res) => {
+  try {
+    const data = await getLiveFxRates();
+    return success(res, data, data.live ? 'Live FX rates' : 'FX rates (cached / fallback)');
+  } catch {
+    return fail(res, 'Could not fetch live FX rates', 502);
+  }
+});
 
 export default router;
