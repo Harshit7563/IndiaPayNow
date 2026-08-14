@@ -25,8 +25,10 @@ import {
 import { SiteHeader } from '../components/SiteHeader';
 import { SiteFooter } from '../components/SiteFooter';
 import { CrossBorderActivity } from '../components/CrossBorderActivity';
+import { AppDownloadOffers, GiftOfferCard } from '../components/AppDownloadOffers';
 import { serviceCatalog } from '../data/services';
 import { mobilePlans } from '../data/recharge';
+import { GIFT_OFFER } from '../data/appDownload';
 
 const telecomBrands = [
   { name: 'Jio', src: '/logos/jio.svg', accent: '#0A2885' },
@@ -52,9 +54,9 @@ const featureCards = [
   },
   {
     tone: 'soft',
-    title: 'Gift a little extra',
-    text: 'Celebrate birthdays, festivals, or a job well done — instantly.',
-    amount: '₹250',
+    title: GIFT_OFFER.title,
+    text: GIFT_OFFER.text,
+    amount: GIFT_OFFER.amount,
   },
 ];
 
@@ -488,10 +490,15 @@ export default function Landing() {
       </section>
 
       {/* Feature carousel */}
-      <section className="mx-auto max-w-6xl px-4 pb-16 md:pb-20">
+      <section className="mx-auto max-w-6xl px-4 pb-10 md:pb-12">
         <div className="grid gap-4 md:grid-cols-3 md:gap-5">
           {featureCards.map((card, i) => {
             const active = i === featureIndex;
+            if (card.tone === 'soft') {
+              return (
+                <GiftOfferCard key={card.title} active={active} onSelect={() => setFeatureIndex(i)} />
+              );
+            }
             return (
               <button
                 key={card.title}
@@ -500,8 +507,8 @@ export default function Landing() {
                 className={`overflow-hidden rounded-[1.75rem] text-left transition md:rounded-[2rem] ${
                   active ? 'ring-2 ring-[#111]/20' : 'opacity-95 hover:opacity-100'
                 } ${card.tone === 'dark' ? 'bg-[#111] text-white' : ''} ${
-                  card.tone === 'soft' ? 'bg-[#dcebff] text-slate-800' : ''
-                } ${card.tone === 'photo' ? 'relative min-h-[260px] text-white' : 'p-6 md:min-h-[260px] md:p-7'}`}
+                  card.tone === 'photo' ? 'relative min-h-[260px] text-white' : 'p-6 md:min-h-[260px] md:p-7'
+                }`}
               >
                 {card.tone === 'photo' && (
                   <>
@@ -513,16 +520,11 @@ export default function Landing() {
                     </div>
                   </>
                 )}
-                {card.tone !== 'photo' && (
+                {card.tone === 'dark' && (
                   <>
-                    {card.amount && (
-                      <p className="font-display text-4xl font-extrabold text-[#0070ba]">{card.amount}</p>
-                    )}
-                    {card.tone === 'dark' && <div className="mb-8 h-px w-12 bg-white/30" />}
+                    <div className="mb-8 h-px w-12 bg-white/30" />
                     <h3 className="mt-auto font-display text-2xl font-bold">{card.title}</h3>
-                    <p className={`mt-2 text-sm ${card.tone === 'dark' ? 'text-white/70' : 'text-slate-600'}`}>
-                      {card.text}
-                    </p>
+                    <p className="mt-2 text-sm text-white/70">{card.text}</p>
                   </>
                 )}
               </button>
@@ -541,6 +543,8 @@ export default function Landing() {
           ))}
         </div>
       </section>
+
+      <AppDownloadOffers />
 
       {/* Services anywhere */}
       <section id="payments" className="px-4 py-16 md:py-20">
