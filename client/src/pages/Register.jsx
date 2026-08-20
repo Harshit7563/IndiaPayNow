@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Banknote, Check, CircleAlert, Eye, EyeOff, IdCard, Loader2, UserRound } from 'lucide-react';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Banknote, Check, CircleAlert, Eye, EyeOff, IdCard, Loader2, UserRound, Wallet } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button, Input, Select } from '../components/ui';
 import { Logo } from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { destinationForLogin, normalizeAccountIntent, roleForIntent } from '../utils/authRouting';
+import { destinationForLogin, normalizeAccountIntent } from '../utils/authRouting';
 
 const nationalities = [
   'India',
@@ -64,7 +64,6 @@ const indianStates = [
   'Other',
 ];
 
-const gstinPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 const dobPattern = /^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])\/(19|20)\d{2}$/;
 const pinPattern = /^\d{6}$/;
 const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
@@ -93,7 +92,7 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const urlIntent = normalizeAccountIntent(searchParams.get('type') || searchParams.get('account') || searchParams.get('role'));
-  const [step, setStep] = useState('type');
+  const [step, setStep] = useState('personal');
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
@@ -101,13 +100,17 @@ export default function Register() {
   const [dobError, setDobError] = useState('');
   const [pinStatus, setPinStatus] = useState('idle'); // idle | loading | success | error
   const [pinMeta, setPinMeta] = useState('');
+  const [gstinStatus, setGstinStatus] = useState('idle');
+  const [gstinMeta, setGstinMeta] = useState('');
+  const [panMeta, setPanMeta] = useState('');
   const [kycSkipped, setKycSkipped] = useState(false);
   const [panVerified, setPanVerified] = useState(false);
   const [aadhaarVerified, setAadhaarVerified] = useState(false);
   const [aadhaarOtpSent, setAadhaarOtpSent] = useState(false);
   const pinRequestRef = useRef(0);
+  const gstinRequestRef = useRef(0);
   const [form, setForm] = useState({
-    role: roleForIntent(urlIntent || 'personal'),
+    role: 'user',
     nationality: 'India',
     firstName: '',
     middleName: '',
@@ -133,7 +136,7 @@ export default function Register() {
     gstin: '',
   });
 
-  const isBusiness = form.role === 'merchant';
+  const isBusiness = false;
   const fullName = useMemo(() => buildFullName(form), [form]);
 
   useEffect(() => {
@@ -156,13 +159,26 @@ export default function Register() {
 
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-        const data = await response.json();
+        let office = null;
+        try {
+          const { data } = await api.get(`/kyc/pincode/${pin}`);
+          office = data.data;
+        } catch {
+          const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+          const payload = await response.json();
+          const result = Array.isArray(payload) ? payload[0] : null;
+          const first = result?.PostOffice?.[0];
+          if (result?.Status === 'Success' && first) {
+            office = {
+              postOffice: first.Name,
+              district: first.District,
+              state: first.State,
+              block: first.Block,
+            };
+          }
+        }
         if (requestId !== pinRequestRef.current) return;
-
-        const result = Array.isArray(data) ? data[0] : null;
-        const office = result?.PostOffice?.[0];
-        if (result?.Status !== 'Success' || !office) {
+        if (!office?.district && !office?.state) {
           setPinStatus('error');
           setPinMeta('Invalid PIN code. Please check and try again.');
           return;
@@ -170,11 +186,11 @@ export default function Register() {
 
         setForm((current) => ({
           ...current,
-          city: office.District || office.Block || current.city,
-          state: indianStates.includes(office.State) ? office.State : current.state || 'Other',
+          city: office.district || office.block || current.city,
+          state: indianStates.includes(office.state) ? office.state : current.state || 'Other',
         }));
         setPinStatus('success');
-        setPinMeta(`${office.Name?.trim() || 'Post office'} · ${office.District}, ${office.State}`);
+        setPinMeta(`${office.postOffice?.trim() || 'Post office'} · ${office.district}, ${office.state}`);
       } catch {
         if (requestId !== pinRequestRef.current) return;
         setPinStatus('error');
@@ -185,13 +201,54 @@ export default function Register() {
     return () => clearTimeout(timer);
   }, [form.pinCode]);
 
+  useEffect(() => {
+    const gstin = form.gstin;
+    if (!gstin) {
+      setGstinStatus('idle');
+      setGstinMeta('');
+      return undefined;
+    }
+    if (gstin.length < 15) {
+      setGstinStatus('idle');
+      setGstinMeta('');
+      return undefined;
+    }
+
+    const requestId = ++gstinRequestRef.current;
+    setGstinStatus('loading');
+    setGstinMeta('Verifying GSTIN…');
+
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await api.post('/kyc/gstin', { gstin });
+        if (requestId !== gstinRequestRef.current) return;
+        const info = data.data || {};
+        setGstinStatus('success');
+        setGstinMeta(`${info.state} · PAN ${info.pan} · ${info.holderType}`);
+      } catch (error) {
+        if (requestId !== gstinRequestRef.current) return;
+        setGstinStatus('error');
+        setGstinMeta(error.response?.data?.message || 'Invalid GSTIN. Check and try again.');
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [form.gstin]);
+
   const update = (event) => {
     const { name, value, type, checked } = event.target;
     let next = type === 'checkbox' ? checked : value;
-    if (name === 'gstin') next = value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 15);
+    if (name === 'gstin') {
+      next = value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 15);
+      if (String(next).length < 15) {
+        setGstinStatus('idle');
+        setGstinMeta('');
+      }
+    }
     if (name === 'pan') {
       next = value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 10);
       setPanVerified(false);
+      setPanMeta('');
     }
     if (name === 'aadhaar') {
       next = value.replace(/\D/g, '').slice(0, 12);
@@ -221,15 +278,12 @@ export default function Register() {
   };
 
   const goBack = () => {
-    if (step === 'personal') setStep('type');
-    else if (step === 'address') setStep('personal');
+    if (step === 'address') setStep('personal');
     else if (step === 'kyc') setStep('address');
     else if (step === 'kyc-pan') setStep('kyc');
     else if (step === 'kyc-aadhaar') setStep('kyc-pan');
-    else if (step === 'business') setStep('type');
     else if (step === 'credentials') {
-      if (isBusiness) setStep('business');
-      else if (kycSkipped) setStep('kyc');
+      if (kycSkipped) setStep('kyc');
       else if (aadhaarVerified || aadhaarOtpSent) setStep('kyc-aadhaar');
       else if (panVerified) setStep('kyc-pan');
       else setStep('kyc');
@@ -254,10 +308,18 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      const { data } = await api.post('/kyc/pan', {
+        pan: form.pan,
+        intent: isBusiness ? 'business' : 'personal',
+      });
+      const info = data.data || {};
       setPanVerified(true);
-      toast.success('PAN verified');
+      setPanMeta(info.holderType || '');
+      toast.success(data.message || `PAN verified · ${info.holderType || 'valid format'}`);
+      if (info.warning) toast(info.warning);
       setStep('kyc-aadhaar');
+    } catch (error) {
+      toast.error(errorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -270,10 +332,12 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await api.post('/kyc/aadhaar', { aadhaar: form.aadhaar });
       setAadhaarOtpSent(true);
       setForm((current) => ({ ...current, aadhaarOtp: '' }));
-      toast.success(`Aadhaar OTP sent (demo: ${DEMO_AADHAAR_OTP})`);
+      toast.success(`Aadhaar checksum valid. Demo OTP: ${DEMO_AADHAAR_OTP}`);
+    } catch (error) {
+      toast.error(errorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -302,10 +366,6 @@ export default function Register() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const continueFromType = () => {
-    setStep(isBusiness ? 'business' : 'personal');
   };
 
   const continueFromPersonal = (event) => {
@@ -373,11 +433,29 @@ export default function Register() {
       toast.error('City is required for business accounts');
       return;
     }
-    if (form.gstin && !gstinPattern.test(form.gstin)) {
-      toast.error('Enter a valid 15-character GSTIN or leave it blank');
+    if (!pinPattern.test(form.pinCode)) {
+      toast.error('Enter a valid 6-digit PIN code');
       return;
     }
-    setStep('credentials');
+    if (pinStatus === 'loading') {
+      toast.error('Please wait while we verify your PIN code');
+      return;
+    }
+    if (pinStatus !== 'success') {
+      toast.error('Enter a valid Indian PIN code');
+      return;
+    }
+    if (form.gstin) {
+      if (gstinStatus === 'loading') {
+        toast.error('Please wait while we verify GSTIN');
+        return;
+      }
+      if (gstinStatus !== 'success') {
+        toast.error('Enter a valid GSTIN or leave it blank');
+        return;
+      }
+    }
+    setStep('kyc');
   };
 
   const register = async (event) => {
@@ -416,6 +494,8 @@ export default function Register() {
         state: form.state,
         pinCode: form.pinCode,
         agreeMarketing: form.agreeMarketing,
+        ...(panVerified ? { pan: form.pan } : {}),
+        ...(aadhaarVerified ? { aadhaar: form.aadhaar } : {}),
         ...(isBusiness
           ? {
               businessName: form.businessName.trim(),
@@ -503,7 +583,11 @@ export default function Register() {
     }
   };
 
-  const showBack = step !== 'type';
+  const showBack = step !== 'personal';
+
+  if (urlIntent === 'business') {
+    return <Navigate to="/for-business/open-account" replace />;
+  }
 
   return (
     <div className="flex min-h-dvh min-h-screen flex-col bg-white pb-[env(safe-area-inset-bottom)]">
@@ -529,58 +613,23 @@ export default function Register() {
             </button>
           ) : null}
 
-          {step === 'type' && (
+          {step === 'personal' && (
             <>
-              <h1 className="text-center font-display text-[1.75rem] font-extrabold text-[#111] sm:text-3xl">
+              <div className="mb-5 flex justify-center">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#ecfdf5] px-3 py-1 text-[11px] font-bold text-emerald-700">
+                  <Wallet className="h-3.5 w-3.5" /> Personal wallet
+                </span>
+              </div>
+              <h1 className="text-center font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
                 Create your account
               </h1>
               <p className="mt-2 text-center text-sm text-slate-500">
                 Or{' '}
-                <Link to={`/login?type=${isBusiness ? 'business' : 'personal'}`} className="font-bold text-[#0070ba] hover:underline">
+                <Link to="/login" className="font-bold text-[#0070ba] hover:underline">
                   log in
                 </Link>
               </p>
-
-              <div className="mt-8 grid grid-cols-2 gap-2 rounded-full bg-[#f7f9fa] p-1">
-                <button
-                  type="button"
-                  onClick={() => setForm((current) => ({ ...current, role: 'user' }))}
-                  className={`rounded-full py-2.5 text-sm font-bold ${
-                    form.role === 'user' ? 'bg-white text-[#001c64] shadow-sm' : 'text-slate-500'
-                  }`}
-                >
-                  Personal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm((current) => ({ ...current, role: 'merchant' }))}
-                  className={`rounded-full py-2.5 text-sm font-bold ${
-                    form.role === 'merchant' ? 'bg-white text-[#001c64] shadow-sm' : 'text-slate-500'
-                  }`}
-                >
-                  Business
-                </button>
-              </div>
-
-              <div className="mt-8 rounded-3xl border border-[#e5e7eb] bg-white p-6 sm:p-8">
-                <p className="text-sm leading-relaxed text-slate-500">
-                  {isBusiness
-                    ? 'Open a business account to accept payments, share QR, and settle to your bank.'
-                    : 'Open a personal account to send money, pay bills, and recharge.'}
-                </p>
-                <Button type="button" onClick={continueFromType} className="mt-6 w-full rounded-full bg-[#111] py-3.5 hover:bg-black">
-                  Next
-                </Button>
-              </div>
-            </>
-          )}
-
-          {step === 'personal' && (
-            <>
-              <h1 className="font-display text-[1.75rem] font-extrabold tracking-tight text-[#111] sm:text-3xl">
-                Personal information
-              </h1>
-              <p className="mt-2 text-sm text-slate-500">Make sure this matches your official ID.</p>
+              <p className="mt-2 text-center text-sm text-slate-500">Make sure this matches your official ID.</p>
 
               <form onSubmit={continueFromPersonal} className="mt-8 space-y-4">
                 <Select label="Nationality" name="nationality" value={form.nationality} onChange={update}>
@@ -638,6 +687,12 @@ export default function Register() {
                   Next
                 </button>
               </form>
+              <p className="mt-5 text-center text-sm text-slate-500">
+                Collecting payments?{' '}
+                <Link to="/for-business/open-account" className="font-bold text-[#0070ba] hover:underline">
+                  Open a business account
+                </Link>
+              </p>
             </>
           )}
 
@@ -680,58 +735,12 @@ export default function Register() {
                     </option>
                   ))}
                 </Select>
-                <div>
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-semibold text-[#2c2e2f]">PIN code</span>
-                    <div className="relative">
-                      <input
-                        name="pinCode"
-                        value={form.pinCode}
-                        onChange={update}
-                        placeholder="6-digit PIN code"
-                        inputMode="numeric"
-                        autoComplete="postal-code"
-                        className={`input-field pr-11 ${
-                          pinStatus === 'error'
-                            ? 'border-red-500 focus:border-red-500'
-                            : pinStatus === 'success'
-                              ? 'border-emerald-500 focus:border-emerald-500'
-                              : ''
-                        }`}
-                      />
-                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                        {pinStatus === 'loading' ? (
-                          <Loader2 className="h-5 w-5 animate-spin text-[#0070ba]" />
-                        ) : null}
-                        {pinStatus === 'success' ? (
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
-                            <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                          </span>
-                        ) : null}
-                        {pinStatus === 'error' ? (
-                          <CircleAlert className="h-5 w-5 text-red-500" />
-                        ) : null}
-                      </span>
-                    </div>
-                  </label>
-                  {pinMeta ? (
-                    <p
-                      className={`mt-1.5 text-xs font-medium ${
-                        pinStatus === 'loading'
-                          ? 'text-[#0070ba]'
-                          : pinStatus === 'success'
-                            ? 'text-emerald-600'
-                            : pinStatus === 'error'
-                              ? 'text-red-600'
-                              : 'text-slate-500'
-                      }`}
-                    >
-                      {pinMeta}
-                    </p>
-                  ) : (
-                    <p className="mt-1.5 text-xs text-slate-400">Verified via India Post PIN API</p>
-                  )}
-                </div>
+                    <VerifiedPinField
+                      value={form.pinCode}
+                      onChange={update}
+                      pinStatus={pinStatus}
+                      pinMeta={pinMeta}
+                    />
 
                 <label className="flex items-start gap-3 pt-2 text-sm leading-5 text-slate-600">
                   <input
@@ -784,7 +793,9 @@ export default function Register() {
                 To pay, you need to provide some information
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-slate-500">
-                As per RBI guidelines, complete your KYC (Know Your Customer) to start making payments.
+                {isBusiness
+                  ? 'Verify owner PAN and Aadhaar, plus GSTIN checksum. These use free government-format checks — no paid API keys.'
+                  : 'As per RBI guidelines, complete KYC with PAN and Aadhaar. PIN is already verified with India Post.'}
               </p>
 
               <div className="mt-8">
@@ -794,19 +805,30 @@ export default function Register() {
                     {
                       icon: UserRound,
                       title: 'PAN number',
-                      detail: null,
+                      detail: panMeta || 'Income Tax PAN structure (4th letter = holder type)',
                       done: panVerified,
                     },
-                    {
-                      icon: Banknote,
-                      title: 'Basic financial information',
-                      detail: null,
-                      done: aadhaarVerified,
-                    },
+                    ...(isBusiness
+                      ? [
+                          {
+                            icon: Banknote,
+                            title: 'GSTIN',
+                            detail: gstinMeta || 'Optional. GSTN checksum + state / PAN decode.',
+                            done: !form.gstin || gstinStatus === 'success',
+                          },
+                        ]
+                      : [
+                          {
+                            icon: Banknote,
+                            title: 'Basic financial information',
+                            detail: null,
+                            done: aadhaarVerified,
+                          },
+                        ]),
                     {
                       icon: IdCard,
-                      title: 'A copy of your ID',
-                      detail: 'Verify with Aadhaar OTP, DigiLocker, or upload later.',
+                      title: isBusiness ? 'Owner Aadhaar' : 'A copy of your ID',
+                      detail: 'UIDAI checksum (free). Live Aadhaar OTP needs a licensed AUA — demo OTP after checksum.',
                       done: aadhaarVerified,
                     },
                   ].map((item) => (
@@ -868,7 +890,9 @@ export default function Register() {
                 Verify your PAN
               </h1>
               <p className="mt-2 text-sm text-slate-500">
-                Enter the PAN linked to {fullName || 'your name'}. We use this for RBI KYC compliance.
+                {isBusiness
+                  ? `Enter the business or owner PAN for ${form.businessName || 'your shop'}. 4th letter shows entity type (P individual, C company, F firm).`
+                  : `Enter the PAN linked to ${fullName || 'your name'}. We check the official 10-character Income Tax format.`}
               </p>
 
               <form onSubmit={verifyPan} className="mt-8 space-y-4">
@@ -877,13 +901,13 @@ export default function Register() {
                   name="pan"
                   value={form.pan}
                   onChange={update}
-                  placeholder="ABCDE1234F"
+                  placeholder="ABCPE1234F"
                   autoComplete="off"
                   autoCapitalize="characters"
                   maxLength={10}
                 />
                 <p className="text-xs leading-5 text-slate-500">
-                  Demo mode accepts any valid PAN format (10 characters: 5 letters, 4 digits, 1 letter).
+                  Free check: Income Tax PAN structure. Personal accounts need an Individual PAN (4th letter P).
                 </p>
                 <Button type="submit" loading={loading} className="mt-2 w-full rounded-full bg-[#111] py-3.5 hover:bg-black">
                   Verify PAN
@@ -898,13 +922,15 @@ export default function Register() {
                 Verify your Aadhaar
               </h1>
               <p className="mt-2 text-sm text-slate-500">
-                Confirm identity with Aadhaar OTP. Your number is used only for verification.
+                We first confirm the UIDAI Verhoeff checksum (free). Live UIDAI OTP is licensed — after checksum, use demo OTP{' '}
+                {DEMO_AADHAAR_OTP}.
               </p>
 
               <form onSubmit={verifyAadhaar} className="mt-8 space-y-4">
                 {panVerified ? (
                   <p className="rounded-2xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
                     PAN verified: <strong>{form.pan}</strong>
+                    {panMeta ? ` · ${panMeta}` : ''}
                   </p>
                 ) : null}
                 <Input
@@ -929,7 +955,7 @@ export default function Register() {
                 {aadhaarOtpSent ? (
                   <>
                     <p className="rounded-2xl bg-[#eef5ff] p-3 text-sm text-[#003087]">
-                      Enter the OTP sent to your Aadhaar mobile. Demo OTP: <strong>{DEMO_AADHAAR_OTP}</strong>
+                      Checksum passed. Enter demo OTP: <strong>{DEMO_AADHAAR_OTP}</strong>
                     </p>
                     <Input
                       label="Aadhaar OTP"
@@ -993,14 +1019,43 @@ export default function Register() {
                     </option>
                   ))}
                 </Select>
-                <Input label="City" name="city" value={form.city} onChange={update} placeholder="e.g. Mumbai" />
-                <Input
-                  label="GSTIN (optional)"
-                  name="gstin"
-                  value={form.gstin}
+                <VerifiedPinField
+                  value={form.pinCode}
                   onChange={update}
-                  placeholder="15-character GSTIN"
+                  pinStatus={pinStatus}
+                  pinMeta={pinMeta}
                 />
+                <Input label="City" name="city" value={form.city} onChange={update} placeholder="Auto-filled from PIN" />
+                <div>
+                  <Input
+                    label="GSTIN (optional)"
+                    name="gstin"
+                    value={form.gstin}
+                    onChange={update}
+                    placeholder="15-character GSTIN"
+                    maxLength={15}
+                    autoCapitalize="characters"
+                  />
+                  {gstinMeta ? (
+                    <p
+                      className={`mt-1.5 text-xs font-medium ${
+                        gstinStatus === 'loading'
+                          ? 'text-[#0070ba]'
+                          : gstinStatus === 'success'
+                            ? 'text-emerald-600'
+                            : gstinStatus === 'error'
+                              ? 'text-red-600'
+                              : 'text-slate-500'
+                      }`}
+                    >
+                      {gstinMeta}
+                    </p>
+                  ) : (
+                    <p className="mt-1.5 text-xs text-slate-400">
+                      Free GSTN checksum — state, PAN, and entity type are decoded from the number.
+                    </p>
+                  )}
+                </div>
                 <button
                   type="submit"
                   className="mt-2 w-full rounded-full bg-[#111] px-6 py-3.5 text-sm font-bold text-white transition hover:bg-black"
@@ -1113,7 +1168,7 @@ export default function Register() {
 
               <form onSubmit={verifyOtp} className="mt-8 space-y-5">
                 <p className="rounded-2xl bg-[#eef5ff] p-3 text-sm text-[#003087]">
-                  Enter the code sent to your mobile. Demo OTP: <strong>123456</strong>
+                  Enter the 6-digit SMS OTP sent to +91 {form.mobile}.
                 </p>
                 <Input
                   label="One-time code"
@@ -1150,6 +1205,63 @@ export default function Register() {
           </p>
         </div>
       </main>
+    </div>
+  );
+}
+
+function VerifiedPinField({ value, onChange, pinStatus, pinMeta }) {
+  return (
+    <div>
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-semibold text-[#2c2e2f]">PIN code</span>
+        <div className="relative">
+          <input
+            name="pinCode"
+            value={value}
+            onChange={onChange}
+            placeholder="6-digit PIN code"
+            inputMode="numeric"
+            autoComplete="postal-code"
+            className={`input-field pr-11 ${
+              pinStatus === 'error'
+                ? 'border-red-500 focus:border-red-500'
+                : pinStatus === 'success'
+                  ? 'border-emerald-500 focus:border-emerald-500'
+                  : ''
+            }`}
+          />
+          <span className="absolute right-3.5 top-1/2 -translate-y-1/2">
+            {pinStatus === 'loading' ? (
+              <Loader2 className="h-5 w-5 animate-spin text-[#0070ba]" />
+            ) : null}
+            {pinStatus === 'success' ? (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
+                <Check className="h-3.5 w-3.5" strokeWidth={3} />
+              </span>
+            ) : null}
+            {pinStatus === 'error' ? (
+              <CircleAlert className="h-5 w-5 text-red-500" />
+            ) : null}
+          </span>
+        </div>
+      </label>
+      {pinMeta ? (
+        <p
+          className={`mt-1.5 text-xs font-medium ${
+            pinStatus === 'loading'
+              ? 'text-[#0070ba]'
+              : pinStatus === 'success'
+                ? 'text-emerald-600'
+                : pinStatus === 'error'
+                  ? 'text-red-600'
+                  : 'text-slate-500'
+          }`}
+        >
+          {pinMeta}
+        </p>
+      ) : (
+        <p className="mt-1.5 text-xs text-slate-400">Live lookup via India Post (free)</p>
+      )}
     </div>
   );
 }

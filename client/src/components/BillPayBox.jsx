@@ -1,19 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  Building2,
-  Car,
-  Check,
-  ChevronDown,
-  Droplets,
-  Flame,
-  Landmark,
-  ShieldCheck,
-  Sparkles,
-  Tv,
-  Wifi,
-  Zap,
-} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Building2, Car, Check, ChevronDown, Droplets, Flame, Landmark, ShieldCheck, Sparkles, Tv, Wifi, Zap } from 'lucide-react';
 import { formatINR } from '../utils/format';
+import { ServiceTabsBar } from './ServiceTabsBar';
 
 const serviceConfig = {
   fastag: {
@@ -208,243 +196,233 @@ export function BillPayBox({
   onAmountChange,
   onPay,
   loading = false,
+  fieldErrors = {},
+  showAvailable = false,
+  siblingTabs = null,
+  brandLabel = null,
+  onServiceChange,
 }) {
   const config = serviceConfig[service] || { ...defaultConfig, title: service };
-  const Icon = config.Icon;
   const [provider, setProvider] = useState(config.providers[0]);
-  const [tab, setTab] = useState('bills');
-  const [fetched, setFetched] = useState(false);
 
   useEffect(() => {
     setProvider(config.providers[0]);
-    setTab('bills');
-    setFetched(false);
   }, [service, config.providers]);
-
-  const dueHint = useMemo(() => {
-    if (!amount) return 'Enter amount or pick a pending bill';
-    return `Ready to pay ${formatINR(amount)}`;
-  }, [amount]);
 
   const fetchBill = () => {
     if (!account?.trim()) return;
     const bill = config.sampleBills[0];
     if (bill) onAmountChange?.(String(bill.amount));
-    setFetched(true);
   };
 
-  return (
-    <div className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_16px_50px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/80 md:rounded-[2rem]">
-      <div className="relative overflow-hidden border-b border-slate-100 px-5 py-5 sm:px-6">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-90"
-          style={{ background: `radial-gradient(ellipse at top right, ${config.soft}, transparent 55%)` }}
-        />
-        <div className="relative flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span
-              className="flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-sm"
-              style={{ background: config.accent }}
-            >
-              <Icon className="h-6 w-6" />
-            </span>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{config.brand}</p>
-              <h2 className="mt-0.5 font-display text-xl font-extrabold tracking-tight text-[#111]">{config.title}</h2>
-              <p className="mt-1 max-w-md text-sm text-slate-500">{config.tip}</p>
-            </div>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold" style={{ background: config.soft, color: config.accent }}>
-            <Sparkles className="h-3.5 w-3.5" /> Instant wallet pay
-          </span>
-        </div>
-      </div>
+  const popularItems =
+    config.sampleBills?.length > 0
+      ? config.sampleBills
+      : config.quickAmounts.map((q) => ({
+          label: `Pay ${formatINR(q)}`,
+          due: 'Quick pay',
+          amount: q,
+          meta: provider || 'Popular',
+        }));
 
-      <div className="grid gap-0 lg:grid-cols-[minmax(300px,400px)_1fr]">
-        <div className="space-y-4 border-b border-slate-100 p-5 sm:p-6 lg:border-b-0 lg:border-r">
-          <div>
-            <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">Provider</label>
-            <div className="relative mt-1.5">
+  return (
+    <div className="relative overflow-hidden rounded-[1.75rem] bg-white shadow-[0_16px_50px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/80 md:rounded-[2rem]">
+      <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#0070ba]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-[#5ba3d9]/15 blur-3xl" />
+
+      {siblingTabs?.length ? (
+        <ServiceTabsBar
+          tabs={siblingTabs}
+          activeId={service}
+          brand={brandLabel || 'Bills'}
+          onChange={onServiceChange}
+        />
+      ) : null}
+
+      <div className="relative space-y-4 p-4 sm:p-5 md:p-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <button
+            type="button"
+            onClick={fetchBill}
+            disabled={!account?.trim()}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#0070ba] disabled:text-slate-400"
+          >
+            Fetch bill
+          </button>
+          <span className="text-sm text-slate-500">{config.tip}</span>
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-stretch lg:gap-4">
+          <div className="grid gap-px overflow-hidden rounded-2xl bg-slate-200/70 ring-1 ring-slate-200 sm:grid-cols-3">
+            <SearchField label="Provider" chevron>
               <select
                 value={provider}
                 onChange={(e) => setProvider(e.target.value)}
-                className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 py-3 pr-10 text-sm font-semibold text-[#111] outline-none transition focus:border-[#0070ba] focus:shadow-[0_0_0_3px_rgba(0,112,186,0.12)]"
+                className="mt-1 w-full appearance-none bg-transparent font-display text-[17px] font-extrabold tracking-tight text-[#111] outline-none sm:text-[18px]"
               >
                 {config.providers.map((p) => (
                   <option key={p}>{p}</option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            </div>
-          </div>
+            </SearchField>
 
-          <div>
-            <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">{config.accountLabel}</label>
-            <div className="relative mt-1.5">
+            <SearchField label={config.accountLabel} error={fieldErrors.account}>
               <input
                 value={account}
                 onChange={(e) => onAccountChange?.(e.target.value)}
                 placeholder={config.placeholder}
-                className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-semibold text-[#111] outline-none transition focus:border-[#0070ba] focus:shadow-[0_0_0_3px_rgba(0,112,186,0.12)]"
+                className="mt-1 w-full bg-transparent font-display text-[17px] font-extrabold tracking-tight text-[#111] outline-none placeholder:font-semibold placeholder:text-slate-300 sm:text-[18px]"
               />
-              {account && (
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  onClick={() => onAccountChange?.('')}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
+            </SearchField>
 
-          <button
-            type="button"
-            onClick={fetchBill}
-            disabled={!account?.trim()}
-            className="w-full rounded-xl border border-dashed border-slate-300 py-2.5 text-sm font-bold text-slate-600 transition hover:border-[#0070ba]/50 hover:bg-[#f8fbff] hover:text-[#0070ba] disabled:opacity-40"
-          >
-            {fetched ? 'Bill fetched ✓' : 'Fetch bill details'}
-          </button>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">Amount</label>
-              <span className="text-[11px] font-semibold text-slate-400">{dueHint}</span>
-            </div>
-            <div className="relative mt-1.5">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
-              <input
-                type="number"
-                min="1"
-                value={amount}
-                onChange={(e) => onAmountChange?.(e.target.value)}
-                placeholder="0"
-                className="w-full rounded-xl border border-slate-200 py-3 pl-8 pr-3 font-display text-lg font-extrabold text-[#111] outline-none transition focus:border-[#0070ba] focus:shadow-[0_0_0_3px_rgba(0,112,186,0.12)]"
-              />
-            </div>
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              {config.quickAmounts.map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  onClick={() => onAmountChange?.(String(q))}
-                  className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
-                    String(amount) === String(q)
-                      ? 'text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            <SearchField label="Amount" error={fieldErrors.amount}>
+              <div className="mt-1 flex items-center gap-1">
+                <span
+                  className={`font-display text-[17px] font-extrabold sm:text-[18px] ${
+                    fieldErrors.amount ? 'text-red-400' : 'text-slate-400'
                   }`}
-                  style={String(amount) === String(q) ? { background: config.accent } : undefined}
                 >
-                  {formatINR(q)}
-                </button>
-              ))}
-            </div>
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  value={amount}
+                  onChange={(e) => onAmountChange?.(e.target.value)}
+                  placeholder="0"
+                  className="w-full bg-transparent font-display text-[17px] font-extrabold tracking-tight text-[#111] outline-none placeholder:text-slate-300 sm:text-[18px]"
+                />
+              </div>
+            </SearchField>
           </div>
 
           <button
             type="button"
             disabled={loading}
             onClick={onPay}
-            className="w-full rounded-2xl py-3.5 text-[15px] font-bold text-white shadow-[0_10px_28px_rgba(0,112,186,0.28)] transition hover:-translate-y-0.5 disabled:opacity-60"
-            style={{ background: config.accent }}
+            className="rounded-2xl bg-[#00baf2] px-8 py-4 text-[15px] font-bold text-white shadow-[0_10px_28px_rgba(0,186,242,0.35)] transition hover:bg-[#00a7d9] disabled:opacity-60 lg:min-w-[160px]"
           >
-            {loading ? 'Processing…' : amount ? `${config.cta} · ${formatINR(amount)}` : config.cta}
+            {loading ? 'Processing…' : amount ? `Pay ${formatINR(amount)}` : config.cta.replace(/^(Pay |Recharge |Book )/, '') || 'Pay'}
           </button>
-
-          <div className="flex flex-wrap gap-3 text-[11px] font-semibold text-slate-500">
-            <span className="inline-flex items-center gap-1">
-              <Check className="h-3.5 w-3.5 text-emerald-500" /> Secure wallet
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Check className="h-3.5 w-3.5 text-emerald-500" /> Instant confirmation
-            </span>
-          </div>
         </div>
 
-        <div className="p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div className="flex gap-4 text-sm font-semibold">
-              {[
-                ['bills', 'Pending bills'],
-                ['recents', 'Recents'],
-                ['offers', 'Offers'],
-              ].map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setTab(id)}
-                  className={`pb-2 transition ${
-                    tab === id ? 'border-b-2 text-[#111]' : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                  style={tab === id ? { borderColor: config.accent, color: config.accent } : undefined}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <span className="text-[11px] font-bold text-slate-400">{provider}</span>
+        {!showAvailable ? (
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+            <span className="text-xs font-semibold text-slate-500">Popular now</span>
+            {config.quickAmounts.slice(0, 4).map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => onAmountChange?.(String(q))}
+                className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                  String(amount) === String(q)
+                    ? 'border-[#0070ba] bg-[#eef5ff] text-[#0070ba]'
+                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-[#0070ba]/40 hover:bg-[#eef5ff] hover:text-[#0070ba]'
+                }`}
+              >
+                {formatINR(q)}
+              </button>
+            ))}
           </div>
-
-          {tab === 'bills' && (
-            <div className="mt-4 space-y-3">
-              {(config.sampleBills.length ? config.sampleBills : [{ label: 'No pending bills', due: 'Add account to fetch', amount: 0, meta: '—' }]).map((bill) => (
-                <button
-                  key={bill.label + bill.meta}
-                  type="button"
-                  disabled={!bill.amount}
-                  onClick={() => {
-                    if (!bill.amount) return;
-                    onAmountChange?.(String(bill.amount));
-                    if (!account) onAccountChange?.(bill.meta.split('·')[1]?.trim().replace(/\*/g, '9') || '9876543210');
-                    setFetched(true);
-                  }}
-                  className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3.5 text-left transition hover:border-slate-200 hover:bg-white hover:shadow-sm disabled:cursor-default disabled:opacity-70"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-[#111]">{bill.label}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{bill.meta}</p>
-                    <p className="mt-1 text-[11px] font-semibold" style={{ color: config.accent }}>
-                      {bill.due}
-                    </p>
-                  </div>
-                  {bill.amount > 0 && (
-                    <span
-                      className="shrink-0 rounded-xl px-3 py-2 text-sm font-extrabold text-white"
-                      style={{ background: config.accent }}
-                    >
-                      {formatINR(bill.amount)}
-                    </span>
-                  )}
-                </button>
-              ))}
-              <p className="pt-1 text-[11px] text-slate-400">Demo bills for prototype. Live BBPS / partner APIs can plug in later.</p>
+        ) : (
+          <div id="popular-plans" className="space-y-4 border-t border-slate-100 pt-4 scroll-mt-24">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-[#111]">Popular options</p>
+                <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-600">
+                  <Sparkles className="h-3.5 w-3.5" /> {provider}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">{account || 'Select below'}</p>
             </div>
-          )}
 
-          {tab === 'recents' && (
-            <div className="mt-8 text-center text-sm text-slate-500">
-              Recent {config.title.toLowerCase()} payments will show here.
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {config.quickAmounts.map((q) => {
+                const active = String(amount) === String(q);
+                return (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => onAmountChange?.(String(q))}
+                    className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                      active ? 'bg-[#0070ba] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {formatINR(q)}
+                  </button>
+                );
+              })}
             </div>
-          )}
 
-          {tab === 'offers' && (
-            <div className="mt-4 space-y-3">
-              {[
-                { title: 'Wallet cashback', text: 'Get up to ₹50 back on your next payment.' },
-                { title: 'Autopay setup', text: 'Never miss a due date — enable autopay in one tap.' },
-              ].map((offer) => (
-                <div key={offer.title} className="rounded-2xl border border-slate-100 px-4 py-3.5" style={{ background: config.soft }}>
-                  <p className="text-sm font-bold text-[#111]">{offer.title}</p>
-                  <p className="mt-1 text-xs text-slate-600">{offer.text}</p>
-                </div>
-              ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {popularItems.map((item) => {
+                const selected = String(amount) === String(item.amount);
+                return (
+                  <button
+                    key={item.label + item.meta}
+                    type="button"
+                    onClick={() => {
+                      onAmountChange?.(String(item.amount));
+                      if (!account && item.meta) {
+                        const digits = String(item.meta).replace(/[^\d]/g, '').slice(-10);
+                        if (digits) onAccountChange?.(digits);
+                      }
+                    }}
+                    className={`rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${
+                      selected
+                        ? 'border-[#0070ba] bg-[#eef5ff] shadow-[0_0_0_1px_#0070ba]'
+                        : 'border-slate-100 bg-slate-50/80 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-display text-base font-extrabold text-[#111]">{item.label}</p>
+                          {selected ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#0070ba] px-2 py-0.5 text-[10px] font-bold text-white">
+                              <Check className="h-3 w-3" /> Selected
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-0.5 text-xs text-slate-500">{item.meta}</p>
+                        <p className="mt-1 text-[11px] font-semibold text-[#0070ba]">{item.due}</p>
+                      </div>
+                      <span className="rounded-xl bg-[#00baf2] px-2.5 py-1.5 text-sm font-extrabold text-white">
+                        {formatINR(item.amount)}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function SearchField({ label, chevron, error, children }) {
+  return (
+    <label
+      className={`group relative flex min-h-[88px] cursor-text flex-col items-start justify-center px-4 py-3 text-left transition sm:px-5 ${
+        error ? 'bg-red-50 ring-2 ring-inset ring-red-400' : 'bg-white hover:bg-slate-50/80'
+      }`}
+    >
+      <span
+        className={`flex w-full items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.06em] ${
+          error ? 'text-red-600' : 'text-slate-400'
+        }`}
+      >
+        {label}
+        {error ? <span className="normal-case tracking-normal">· required</span> : null}
+        {chevron ? (
+          <ChevronDown className={`ml-auto h-3.5 w-3.5 ${error ? 'text-red-400' : 'text-slate-400'}`} />
+        ) : null}
+      </span>
+      {children}
+      {error ? <span className="mt-1 text-[11px] font-semibold text-red-600">{error}</span> : null}
+    </label>
   );
 }
 

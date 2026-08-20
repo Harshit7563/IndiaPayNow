@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL } from './siteConfig';
+
 export const marketingPages = {
   '/company/about-us': {
     section: 'Company',
@@ -58,7 +60,7 @@ export const marketingPages = {
     ],
     blocks: [
       { title: 'Brand story', text: 'India Pay Now is building a cleaner wallet for transfers, bills, and business collections.' },
-      { title: 'Press contact', text: 'Reach press@indiapaynow.com for interviews, quotes, and product briefings.' },
+      { title: 'Press contact', text: `Reach ${CONTACT_EMAIL} for interviews, quotes, and product briefings.` },
       { title: 'Coverage', text: 'Fintech launches, product updates, and partnership announcements — all in one place.' },
     ],
     listTitle: 'Recent mentions',
@@ -358,7 +360,7 @@ export const marketingPages = {
       ['Trusted', 'RBI-ready'],
     ],
     blocks: [
-      { title: 'Simple steps', text: 'Upload documents, confirm details, and finish verification without hassle.' },
+      { title: 'Simple steps', text: 'Verify PIN with India Post, PAN with Income Tax format, Aadhaar checksum (UIDAI Verhoeff), and GSTIN checksum — all free, no paid API keys.' },
       { title: 'Higher limits', text: 'Verified accounts unlock smoother transfers and premium features.' },
       { title: 'Stay compliant', text: 'Built for secure identity checks that protect you and your payments.' },
     ],
@@ -375,7 +377,7 @@ export const marketingPages = {
       ['Private', 'By design'],
     ],
     blocks: [
-      { title: 'OTP confirmation', text: 'Enter Aadhaar and confirm with a secure OTP on your registered mobile.' },
+      { title: 'OTP confirmation', text: 'Checksum is verified first (free UIDAI Verhoeff). Live Aadhaar OTP needs a licensed AUA — demo OTP is used after the number checks out.' },
       { title: 'Clear status', text: 'Know instantly whether verification succeeded.' },
       { title: 'Used where needed', text: 'Helpful for KYC, account upgrades, and trusted profile checks.' },
     ],
@@ -392,7 +394,7 @@ export const marketingPages = {
       ['Secure', 'Checks'],
     ],
     blocks: [
-      { title: 'Enter PAN', text: 'Provide PAN and confirm the details returned by verification.' },
+      { title: 'Enter PAN', text: 'We check the official 10-character Income Tax format. 4th letter shows holder type (P individual, C company, F firm). Free — no NSDL key.' },
       { title: 'Reduce errors', text: 'Avoid failed onboarding due to mismatched identity data.' },
       { title: 'Business ready', text: 'Useful for merchants, payouts, and account upgrades.' },
     ],
@@ -409,7 +411,7 @@ export const marketingPages = {
       ['Safe', 'Settlements'],
     ],
     blocks: [
-      { title: 'Account + IFSC', text: 'Enter bank details and confirm ownership quickly.' },
+      { title: 'Account + IFSC', text: 'IFSC is looked up from the free RBI directory. Bank name and branch fill in automatically.' },
       { title: 'Fewer failed payouts', text: 'Catch wrong account numbers before settlements.' },
       { title: 'Merchant friendly', text: 'Ideal before linking settlement accounts.' },
     ],

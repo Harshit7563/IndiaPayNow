@@ -4,6 +4,8 @@ import { body } from 'express-validator';
 import db from '../db/database.js';
 import { generateId, generateUpiId, success, fail } from '../utils/helpers.js';
 import { createNotification } from '../middleware/audit.js';
+import { verifyPan, verifyAadhaar, verifyGstin } from '../services/indiaKyc.js';
+import { issueAndSendOtp, normalizeMobile } from '../services/smsOtp.js';
 
 const signToken = (userId, role) =>
   jwt.sign({ userId, role }, process.env.JWT_SECRET, {
@@ -59,36 +61,84 @@ export const registerValidators = [
   }),
   body('gstin')
     .optional({ values: 'falsy' })
-    .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/)
-    .withMessage('Enter a valid 15-character GSTIN'),
+    .custom((value) => {
+      const result = verifyGstin(value);
+      if (!result.valid) throw new Error(result.message || 'Enter a valid 15-character GSTIN');
+      return true;
+    }),
 ];
+
+const kycStatusFromBody = (body, role) => {
+  const pan = String(body?.pan || '').trim();
+  const aadhaar = String(body?.aadhaar || '').trim();
+  if (!pan || !aadhaar) return 'pending';
+  const panCheck = verifyPan(pan, { intent: role === 'merchant' ? 'business' : 'personal' });
+  const aadhaarCheck = verifyAadhaar(aadhaar);
+  return panCheck.valid && aadhaarCheck.valid ? 'verified' : 'pending';
+};
 
 export const loginValidators = [
   body('identifier').notEmpty().withMessage('Email or mobile is required'),
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
-const issueRegisterOtp = (mobile) => {
-  const otpId = generateId('otp');
-  const code = process.env.OTP_DEMO_CODE || '123456';
+const issueRegisterOtp = (mobile) => issueAndSendOtp(mobile, 'register');
+
+const saveSettlementBank = (userId, body) => {
+  const accountHolder = String(body?.accountHolder || '').trim();
+  const accountNumber = String(body?.accountNumber || '').trim();
+  const ifsc = String(body?.ifsc || '').trim().toUpperCase();
+  const bankName = String(body?.bankName || '').trim();
+  if (!accountHolder || !accountNumber || !ifsc || !bankName) return;
+  const existing = db.prepare('SELECT id FROM bank_accounts WHERE user_id = ?').get(userId);
+  if (existing) {
+    db.prepare(
+      `UPDATE bank_accounts
+       SET account_holder = ?, account_number = ?, ifsc = ?, bank_name = ?, is_default = 1
+       WHERE user_id = ?`
+    ).run(accountHolder, accountNumber, ifsc, bankName, userId);
+    return;
+  }
   db.prepare(
-    `INSERT INTO otp_codes (id, identifier, code, purpose, expires_at)
-     VALUES (?, ?, ?, ?, datetime('now', '+10 minutes'))`
-  ).run(otpId, mobile, code, 'register');
-  return code;
+    `INSERT INTO bank_accounts (id, user_id, account_holder, account_number, ifsc, bank_name, is_default)
+     VALUES (?, ?, ?, ?, ?, ?, 1)`
+  ).run(generateId('bnk'), userId, accountHolder, accountNumber, ifsc, bankName);
 };
 
-export const register = (req, res) => {
+const merchantTypeLabel = (body) => {
+  const type = String(body?.businessType || '').trim() || 'Retail';
+  const entity = String(body?.legalEntity || '').trim();
+  return entity ? `${type} · ${entity}` : type;
+};
+
+const upsertMerchant = (userId, fullName, body) => {
+  const name = String(body?.businessName || '').trim() || `${fullName}'s Business`;
+  const type = merchantTypeLabel(body);
+  const gst = String(body?.gstin || '').trim().toUpperCase() || null;
+  const cycle = String(body?.settlementCycle || '').trim() || 'Instant';
+  const merchant = db.prepare('SELECT id FROM merchants WHERE user_id = ?').get(userId);
+  if (!merchant) {
+    db.prepare(
+      `INSERT INTO merchants (id, user_id, business_name, business_type, gstin, settlement_cycle, available_settlement)
+       VALUES (?, ?, ?, ?, ?, ?, 0)`
+    ).run(generateId('mrc'), userId, name, type, gst, cycle);
+  } else {
+    db.prepare(
+      `UPDATE merchants
+       SET business_name = ?, business_type = ?, gstin = ?, settlement_cycle = ?, updated_at = datetime('now')
+       WHERE user_id = ?`
+    ).run(name, type, gst, cycle, userId);
+  }
+  saveSettlementBank(userId, body);
+};
+
+export const register = async (req, res) => {
   const {
     fullName,
     email,
     mobile,
     password,
     role = 'user',
-    businessName,
-    businessType,
-    gstin,
-    city,
   } = req.body;
 
   const emailNorm = email.toLowerCase();
@@ -105,38 +155,33 @@ export const register = (req, res) => {
 
     const passwordHash = bcrypt.hashSync(password, 10);
     const allowedRole = ['user', 'merchant'].includes(role) ? role : 'user';
+    const kycStatus = kycStatusFromBody(req.body, allowedRole);
     db.prepare(
-      `UPDATE users SET full_name = ?, password_hash = ?, role = ?, updated_at = datetime('now') WHERE id = ?`
-    ).run(fullName, passwordHash, allowedRole, existing.id);
+      `UPDATE users SET full_name = ?, password_hash = ?, role = ?, kyc_status = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(fullName, passwordHash, allowedRole, kycStatus, existing.id);
 
     if (allowedRole === 'merchant') {
-      const merchant = db.prepare('SELECT id FROM merchants WHERE user_id = ?').get(existing.id);
-      if (!merchant) {
-        const merchantId = generateId('mrc');
-        const name = String(businessName || '').trim() || `${fullName}'s Business`;
-        const type = String(businessType || '').trim() || 'Retail';
-        const gst = String(gstin || '').trim().toUpperCase() || null;
-        const locationNote = city ? `City: ${String(city).trim()}` : null;
-        db.prepare(
-          `INSERT INTO merchants (id, user_id, business_name, business_type, gstin, available_settlement)
-           VALUES (?, ?, ?, ?, ?, ?)`
-        ).run(merchantId, existing.id, name, locationNote ? `${type} · ${locationNote}` : type, gst, 0);
-      }
+      upsertMerchant(existing.id, fullName, req.body);
     }
 
-    const code = issueRegisterOtp(mobile);
-    return success(
-      res,
-      {
-        userId: existing.id,
-        otpRequired: true,
-        demoOtp: code,
-        resumed: true,
-        message: 'OTP sent to your mobile (demo mode)',
-      },
-      'Please verify OTP to continue.',
-      200
-    );
+    try {
+      const sent = await issueRegisterOtp(mobile);
+      return success(
+        res,
+        {
+          userId: existing.id,
+          otpRequired: true,
+          resumed: true,
+          identifier: sent.mobile,
+          mobileMasked: sent.mobileMasked,
+          message: `OTP sent to ${sent.mobileMasked}`,
+        },
+        'Please verify OTP to continue.',
+        200
+      );
+    } catch (error) {
+      return fail(res, error.message || 'Account saved. Could not send OTP — tap resend.', error.status || 502);
+    }
   }
 
   if (existing) return fail(res, 'Email or mobile already registered', 409);
@@ -147,61 +192,58 @@ export const register = (req, res) => {
     isTaken: (candidate) => !!db.prepare('SELECT id FROM users WHERE upi_id = ?').get(candidate),
   });
   const allowedRole = ['user', 'merchant'].includes(role) ? role : 'user';
+  const kycStatus = kycStatusFromBody(req.body, allowedRole);
 
   db.prepare(
-    `INSERT INTO users (id, full_name, email, mobile, password_hash, role, upi_id, wallet_balance)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, fullName, emailNorm, mobile, passwordHash, allowedRole, upiId, 1000);
+    `INSERT INTO users (id, full_name, email, mobile, password_hash, role, upi_id, wallet_balance, kyc_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, fullName, emailNorm, mobile, passwordHash, allowedRole, upiId, 1000, kycStatus);
 
   if (allowedRole === 'merchant') {
-    const merchantId = generateId('mrc');
-    const name = String(businessName || '').trim() || `${fullName}'s Business`;
-    const type = String(businessType || '').trim() || 'Retail';
-    const gst = String(gstin || '').trim().toUpperCase() || null;
-    const locationNote = city ? `City: ${String(city).trim()}` : null;
-    db.prepare(
-      `INSERT INTO merchants (id, user_id, business_name, business_type, gstin, available_settlement)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).run(merchantId, id, name, locationNote ? `${type} · ${locationNote}` : type, gst, 0);
+    upsertMerchant(id, fullName, req.body);
   }
-
-  const code = issueRegisterOtp(mobile);
 
   createNotification(id, 'security', 'Welcome to India Pay Now', 'Your account has been created successfully.');
 
-  return success(
-    res,
-    {
-      userId: id,
-      otpRequired: true,
-      demoOtp: code,
-      message: 'OTP sent to your mobile (demo mode)',
-    },
-    'Registration successful. Please verify OTP.',
-    201
-  );
+  try {
+    const sent = await issueRegisterOtp(mobile);
+    return success(
+      res,
+      {
+        userId: id,
+        otpRequired: true,
+        identifier: sent.mobile,
+        mobileMasked: sent.mobileMasked,
+        message: `OTP sent to ${sent.mobileMasked}`,
+      },
+      'Registration successful. Please verify OTP.',
+      201
+    );
+  } catch (error) {
+    return fail(res, error.message || 'Account created. Could not send OTP — tap resend.', error.status || 502);
+  }
 };
 
 export const verifyOtp = (req, res) => {
   const { identifier, code, purpose = 'register' } = req.body;
   if (!identifier || !code) return fail(res, 'Identifier and OTP are required');
 
+  const user = db
+    .prepare('SELECT * FROM users WHERE mobile = ? OR email = ?')
+    .get(identifier, String(identifier).toLowerCase());
+  if (!user) return fail(res, 'User not found', 404);
+
+  const lookup = normalizeMobile(user.mobile || identifier);
   const otp = db
     .prepare(
       `SELECT * FROM otp_codes WHERE identifier = ? AND purpose = ? AND used = 0
        AND datetime(expires_at) > datetime('now') ORDER BY created_at DESC LIMIT 1`
     )
-    .get(identifier, purpose);
+    .get(lookup, purpose);
 
-  if (!otp || otp.code !== code) return fail(res, 'Invalid or expired OTP', 400);
+  if (!otp || String(otp.code) !== String(code).trim()) return fail(res, 'Invalid or expired OTP', 400);
 
   db.prepare('UPDATE otp_codes SET used = 1 WHERE id = ?').run(otp.id);
-
-  const user = db
-    .prepare('SELECT * FROM users WHERE mobile = ? OR email = ?')
-    .get(identifier, identifier.toLowerCase?.() || identifier);
-
-  if (!user) return fail(res, 'User not found', 404);
 
   if (purpose === 'login' || purpose === 'register' || purpose === 'transfer') {
     const token = signToken(user.id, user.role);
@@ -216,7 +258,7 @@ export const verifyOtp = (req, res) => {
   return success(res, { verified: true }, 'OTP verified');
 };
 
-export const login = (req, res) => {
+export const login = async (req, res) => {
   const { identifier, password, rememberMe } = req.body;
   const user = db
     .prepare('SELECT * FROM users WHERE email = ? OR mobile = ?')
@@ -228,19 +270,21 @@ export const login = (req, res) => {
 
   if (!user.is_active) return fail(res, 'Account is deactivated', 403);
 
-  const otpId = generateId('otp');
-  const code = process.env.OTP_DEMO_CODE || '123456';
-
   if (user.two_fa_enabled) {
-    db.prepare(
-      `INSERT INTO otp_codes (id, identifier, code, purpose, expires_at)
-       VALUES (?, ?, ?, ?, datetime('now', '+10 minutes'))`
-    ).run(otpId, user.mobile, code, 'login');
-    return success(res, {
-      otpRequired: true,
-      identifier: user.mobile,
-      demoOtp: code,
-    }, 'OTP required for login');
+    try {
+      const sent = await issueAndSendOtp(user.mobile, 'login');
+      return success(
+        res,
+        {
+          otpRequired: true,
+          identifier: sent.mobile,
+          mobileMasked: sent.mobileMasked,
+        },
+        `OTP sent to ${sent.mobileMasked}`
+      );
+    } catch (error) {
+      return fail(res, error.message || 'Could not send OTP', error.status || 502);
+    }
   }
 
   const expiresIn = rememberMe ? '30d' : process.env.JWT_EXPIRES_IN || '7d';
@@ -258,7 +302,7 @@ export const login = (req, res) => {
   return success(res, { token, user: sanitizeUser(user) }, 'Login successful');
 };
 
-export const requestOtpLogin = (req, res) => {
+export const requestOtpLogin = async (req, res) => {
   const { identifier } = req.body;
   if (!identifier) return fail(res, 'Mobile or email required');
 
@@ -267,16 +311,19 @@ export const requestOtpLogin = (req, res) => {
     .get(identifier.toLowerCase(), identifier);
   if (!user) return fail(res, 'User not found', 404);
 
-  const code = process.env.OTP_DEMO_CODE || '123456';
-  db.prepare(
-    `INSERT INTO otp_codes (id, identifier, code, purpose, expires_at)
-     VALUES (?, ?, ?, ?, datetime('now', '+10 minutes'))`
-  ).run(generateId('otp'), user.mobile, code, 'login');
-
-  return success(res, { identifier: user.mobile, demoOtp: code }, 'OTP sent (demo mode)');
+  try {
+    const sent = await issueAndSendOtp(user.mobile, 'login');
+    return success(
+      res,
+      { identifier: sent.mobile, mobileMasked: sent.mobileMasked },
+      `OTP sent to ${sent.mobileMasked}`
+    );
+  } catch (error) {
+    return fail(res, error.message || 'Could not send OTP', error.status || 502);
+  }
 };
 
-export const resendOtp = (req, res) => {
+export const resendOtp = async (req, res) => {
   const { identifier, purpose = 'register' } = req.body;
   if (!identifier) return fail(res, 'Mobile or email required');
 
@@ -288,17 +335,16 @@ export const resendOtp = (req, res) => {
     .get(String(identifier).toLowerCase(), identifier);
   if (!user) return fail(res, 'User not found', 404);
 
-  const code = process.env.OTP_DEMO_CODE || '123456';
-  db.prepare(
-    `INSERT INTO otp_codes (id, identifier, code, purpose, expires_at)
-     VALUES (?, ?, ?, ?, datetime('now', '+10 minutes'))`
-  ).run(generateId('otp'), user.mobile, code, purpose);
-
-  return success(
-    res,
-    { identifier: user.mobile, demoOtp: code, purpose },
-    'OTP resent (demo mode)'
-  );
+  try {
+    const sent = await issueAndSendOtp(user.mobile, purpose);
+    return success(
+      res,
+      { identifier: sent.mobile, mobileMasked: sent.mobileMasked, purpose },
+      `OTP resent to ${sent.mobileMasked}`
+    );
+  } catch (error) {
+    return fail(res, error.message || 'Could not resend OTP', error.status || 502);
+  }
 };
 
 export const me = (req, res) => success(res, sanitizeUser(req.user));

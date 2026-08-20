@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 
-const travelSlugs = new Set(['flight', 'train', 'bus', 'hotel']);
+import { catalogServicePath } from '../data/services';
 
 function ServiceItem({ slug, label, Icon, onNavigate }) {
-  const to = travelSlugs.has(slug) ? `/app?service=${slug}` : `/app/bills/${slug}`;
+  const to = catalogServicePath(slug);
   return (
     <Link
       to={to}

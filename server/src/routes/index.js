@@ -15,7 +15,11 @@ import {
   transfer,
   getContacts,
   updateProfile,
+  uploadAvatar,
+  removeAvatar,
   updatePreferences,
+  requestTwoFaOtp,
+  confirmTwoFa,
   changePassword,
   getBankAccounts,
   addBankAccount,
@@ -72,11 +76,19 @@ import {
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { auditLog } from '../middleware/audit.js';
+import { uploadAvatarMiddleware } from '../middleware/upload.js';
 import db from '../db/database.js';
 import { generateId, success, fail } from '../utils/helpers.js';
 import { signToken, sanitizeUser } from '../controllers/authController.js';
 import { fetchPnrStatus } from '../services/pnrService.js';
 import { getLiveFxRates } from '../services/fxService.js';
+import {
+  verifyPan,
+  verifyAadhaar,
+  verifyGstin,
+  lookupPincode,
+  lookupIfsc,
+} from '../services/indiaKyc.js';
 
 const router = Router();
 
@@ -91,7 +103,16 @@ router.get('/auth/me', authenticate, me);
 // User
 router.get('/user/profile', authenticate, me);
 router.put('/user/profile', authenticate, updateProfile);
+router.post('/user/avatar', authenticate, (req, res, next) => {
+  uploadAvatarMiddleware(req, res, (err) => {
+    if (err) return fail(res, err.message || 'Upload failed', 400);
+    return uploadAvatar(req, res);
+  });
+});
+router.delete('/user/avatar', authenticate, removeAvatar);
 router.put('/user/preferences', authenticate, updatePreferences);
+router.post('/user/2fa/request-otp', authenticate, requestTwoFaOtp);
+router.post('/user/2fa/confirm', authenticate, confirmTwoFa);
 router.put('/user/password', authenticate, changePassword);
 router.get('/user/bank-accounts', authenticate, getBankAccounts);
 router.post('/user/bank-accounts', authenticate, addBankAccount);
@@ -180,11 +201,56 @@ router.delete('/mandates/:id', authenticate, (req, res) => {
   return success(res, null, 'Mandate cancelled');
 });
 
+router.get('/kyc/pincode/:pin', async (req, res) => {
+  try {
+    const data = await lookupPincode(req.params.pin);
+    if (!data.valid) return fail(res, data.message, 400);
+    return success(res, data, 'PIN verified with India Post');
+  } catch {
+    return fail(res, 'Could not verify PIN right now. Try again.', 502);
+  }
+});
+
+router.post('/kyc/pan', (req, res) => {
+  const data = verifyPan(req.body?.pan, { intent: req.body?.intent });
+  if (!data.valid) return fail(res, data.message, 400);
+  return success(res, data, `PAN verified · ${data.holderType}`);
+});
+
+router.post('/kyc/aadhaar', (req, res) => {
+  const data = verifyAadhaar(req.body?.aadhaar);
+  if (!data.valid) return fail(res, data.message, 400);
+  return success(res, data, 'Aadhaar checksum verified');
+});
+
+router.post('/kyc/gstin', (req, res) => {
+  const data = verifyGstin(req.body?.gstin);
+  if (!data.valid) return fail(res, data.message, 400);
+  if (data.empty) return success(res, data, 'GSTIN skipped');
+  return success(res, data, `GSTIN verified · ${data.state}`);
+});
+
+router.get('/kyc/ifsc/:code', async (req, res) => {
+  try {
+    const data = await lookupIfsc(req.params.code);
+    if (!data.valid) return fail(res, data.message, 400);
+    return success(res, data, `${data.bank} · ${data.branch}`);
+  } catch {
+    return fail(res, 'Could not verify IFSC right now.', 502);
+  }
+});
+
 router.post('/kyc', authenticate, (req, res) => {
-  const { pan, aadhaar } = req.body;
-  if (!pan || !aadhaar) return res.status(400).json({ success: false, message: 'PAN and Aadhaar required' });
-  db.prepare(`UPDATE users SET kyc_status = 'pending', updated_at = datetime('now') WHERE id = ?`).run(req.user.id);
-  return success(res, { kycStatus: 'pending' }, 'KYC submitted for verification');
+  const pan = verifyPan(req.body?.pan, { intent: req.user.role === 'merchant' ? 'business' : 'personal' });
+  const aadhaar = verifyAadhaar(req.body?.aadhaar);
+  if (!pan.valid) return fail(res, pan.message, 400);
+  if (!aadhaar.valid) return fail(res, aadhaar.message, 400);
+  db.prepare(`UPDATE users SET kyc_status = 'verified', updated_at = datetime('now') WHERE id = ?`).run(req.user.id);
+  return success(
+    res,
+    { kycStatus: 'verified', pan: pan.pan, holderType: pan.holderType, aadhaarLast4: aadhaar.last4 },
+    'KYC verified',
+  );
 });
 
 router.post('/support', authenticate, (req, res) => {

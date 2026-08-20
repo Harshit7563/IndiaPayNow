@@ -106,20 +106,24 @@ export function Skeleton({ className = '' }) {
 export function Modal({ open, onClose, title, children, wide }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#001c64]/40 p-0 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#001c64]/40 p-0 pt-14 sm:items-start sm:justify-center sm:p-6 sm:pt-24">
       <button className="absolute inset-0 cursor-default" onClick={onClose} aria-label="Close" />
       <div
-        className={`relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-xl sm:rounded-3xl ${
+        className={`relative z-10 flex max-h-[calc(100vh-4.5rem)] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-xl sm:max-h-[calc(100vh-7.5rem)] sm:rounded-3xl ${
           wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'
         }`}
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
           <h2 className="font-display text-lg font-bold text-[#001c64]">{title}</h2>
-          <button onClick={onClose} className="rounded-full px-2 py-1 text-slate-500 hover:bg-slate-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full px-2 py-1 text-slate-500 hover:bg-slate-100"
+          >
             ✕
           </button>
         </div>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{children}</div>
       </div>
     </div>
   );

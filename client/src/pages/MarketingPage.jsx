@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { ArrowRight, Check } from 'lucide-react';
 import { SiteHeader } from '../components/SiteHeader';
 import { SiteFooter } from '../components/SiteFooter';
+import { CONTACT_EMAIL } from '../data/siteConfig';
 import { marketingPages } from '../data/marketingPages';
 
 export default function MarketingPage() {
@@ -114,6 +115,12 @@ export default function MarketingPage() {
         <p className="mx-auto mt-3 max-w-lg text-sm text-slate-400">
           Join India Pay Now and manage payments with a cleaner, faster experience.
         </p>
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="mx-auto mt-4 inline-block text-sm font-semibold text-[#8ec4ef] hover:text-white"
+        >
+          {CONTACT_EMAIL}
+        </a>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link
             to={`/register?type=${accountType}`}

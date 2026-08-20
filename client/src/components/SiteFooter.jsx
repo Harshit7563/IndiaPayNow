@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { Building2, ShieldCheck } from 'lucide-react';
 import { Logo } from './Logo';
+import { CONTACT_EMAIL } from '../data/siteConfig';
 
 const columns = [
-  ['Company', ['About Us', 'Careers', 'Press', 'Blog']],
+  ['Company', ['About Us', 'Careers', 'Press', 'Blog', 'Trust & Safety']],
   ['Features', ['Send Money', 'Bill Payments', 'Recharges', 'Smart Wallet']],
   ['Business', ['Exports', 'Payment Links', 'Merchant QR', 'Settlements', 'Developer APIs']],
   ['Accounts', ['Personal', 'Business', 'Savings']],
@@ -29,6 +31,7 @@ const pageLinks = {
   Rewards: '/lifestyle/rewards',
   Insurance: '/lifestyle/insurance',
   Donations: '/lifestyle/donations',
+  'Trust & Safety': '/trust-and-safety',
 };
 
 const appLinks = {
@@ -71,6 +74,12 @@ export function SiteFooter({ variant = 'marketing' }) {
             <p className="mt-4 text-sm leading-relaxed text-white">
               Designed for the next generation. India Pay Now makes managing your money effortless.
             </p>
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="mt-3 inline-block text-sm font-semibold text-[#9fd0f5] hover:text-white"
+            >
+              {CONTACT_EMAIL}
+            </a>
             <div className="mt-6 flex gap-3">
               <SocialIcon label="YouTube">
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current"><path d="M22 12.2s0-3.2-.4-4.6a2.8 2.8 0 0 0-2-2C17.8 5.2 12 5.2 12 5.2s-5.8 0-7.6.4a2.8 2.8 0 0 0-2 2C2 9 2 12.2 2 12.2s0 3.2.4 4.6a2.8 2.8 0 0 0 2 2c1.8.4 7.6.4 7.6.4s5.8 0 7.6-.4a2.8 2.8 0 0 0 2-2c.4-1.4.4-4.6.4-4.6zM10 15.5v-6.6l5.6 3.3z" /></svg>
@@ -108,8 +117,24 @@ export function SiteFooter({ variant = 'marketing' }) {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white sm:flex-row sm:items-center sm:justify-between">
-          <p>Privacy Policy / Terms</p>
+        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <p>Privacy Policy / Terms</p>
+            <Link
+              to="/trust-and-safety"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#0a0a0a] shadow-[0_8px_20px_rgba(255,255,255,0.12)] transition hover:bg-[#e8f4ff]"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-[#0070ba]" />
+              Trust &amp; Safety
+            </Link>
+            <Link
+              to="/for-business"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#0a0a0a] shadow-[0_8px_20px_rgba(255,255,255,0.12)] transition hover:bg-[#e8f4ff]"
+            >
+              <Building2 className="h-3.5 w-3.5 text-[#0070ba]" />
+              For Business
+            </Link>
+          </div>
           <p>All rights reserved © India Pay Now {new Date().getFullYear()}</p>
         </div>
       </div>

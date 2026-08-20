@@ -5,6 +5,7 @@ server/.env
 *.db
 .DS_Store
 server/data/
+server/uploads/
 client/dist/
 *.log
 .vite/

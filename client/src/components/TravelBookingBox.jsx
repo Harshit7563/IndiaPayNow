@@ -7,10 +7,10 @@ import {
   Globe2,
   Hotel,
   Plane,
-  Sparkles,
   TrainFront,
   Users,
 } from 'lucide-react';
+import { ServiceTabsBar } from './ServiceTabsBar';
 
 const modes = [
   { id: 'flights', label: 'Flights', Icon: Plane, service: 'flight' },
@@ -153,40 +153,15 @@ export function TravelBookingBox({ initialMode = 'flights', onModeChange, onSear
       <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#0070ba]/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-[#5ba3d9]/15 blur-3xl" />
 
-      {/* Tabs */}
-      <div className="relative flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 px-4 pt-4 sm:px-6 sm:pt-5">
-        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto pb-px [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {modes.map(({ id, label, Icon }) => {
-            const active = mode === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => selectMode(id)}
-                className={`relative flex min-w-[4.5rem] flex-col items-center gap-1.5 px-3 pb-3 pt-1 transition sm:min-w-[5.25rem] sm:px-4 ${
-                  active ? 'text-[#0070ba]' : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <Icon className={`h-5 w-5 transition ${active ? 'scale-110' : ''}`} strokeWidth={active ? 2.25 : 1.75} />
-                <span className="text-[13px] font-semibold tracking-tight">{label}</span>
-                <span
-                  className={`absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-[#0070ba] transition duration-300 ${
-                    active ? 'scale-x-100 opacity-100' : 'scale-x-50 opacity-0'
-                  }`}
-                />
-              </button>
-            );
-          })}
-        </div>
-        <div className="mb-3 flex items-center gap-2 pr-1">
-          <span className="hidden items-center gap-1.5 rounded-full bg-[#eef5ff] px-2.5 py-1 text-[11px] font-bold text-[#0070ba] sm:inline-flex">
-            <Sparkles className="h-3 w-3" /> Extra savings
-          </span>
-          <p className="font-display text-sm font-extrabold tracking-tight text-[#111]">
-            India Pay Now <span className="font-semibold text-[#0070ba]">Travel</span>
-          </p>
-        </div>
-      </div>
+      <ServiceTabsBar
+        tabs={modes.map(({ service, label, Icon }) => ({ id: service, label, Icon }))}
+        activeId={modes.find((m) => m.id === mode)?.service || 'flight'}
+        brand="Travel"
+        onChange={(serviceId) => {
+          const meta = modes.find((m) => m.service === serviceId);
+          if (meta) selectMode(meta.id);
+        }}
+      />
 
       <div className="relative space-y-4 p-4 sm:p-5 md:p-6">
         {!isHotel && (

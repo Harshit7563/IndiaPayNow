@@ -1,16 +1,16 @@
 export const shortcutServices = [
-  { id: 'mobile', label: 'Mobile', slug: 'mobile-recharge' },
-  { id: 'fastag', label: 'FASTag Recharge', slug: 'fastag' },
-  { id: 'dth', label: 'DTH Recharge', slug: 'dth-recharge' },
-  { id: 'electricity', label: 'Electricity Bill', slug: 'electricity-bill' },
-  { id: 'flight', label: 'Flights', slug: 'flight' },
-  { id: 'train', label: 'Trains', slug: 'train' },
-  { id: 'bus', label: 'Bus', slug: 'bus' },
-  { id: 'loan', label: 'Loan EMI', slug: 'loan' },
-  { id: 'insurance', label: 'Insurance / LIC', slug: 'insurance' },
-  { id: 'water', label: 'Water', slug: 'water-bill' },
-  { id: 'broadband', label: 'Broadband/Landline', slug: 'broadband' },
-  { id: 'more', label: 'More', slug: null },
+  { id: 'mobile', label: 'Mobile', slug: 'mobile-recharge', tone: '#0b5cff' },
+  { id: 'fastag', label: 'FASTag', slug: 'fastag', tone: '#d97706' },
+  { id: 'dth', label: 'DTH', slug: 'dth-recharge', tone: '#7c3aed' },
+  { id: 'electricity', label: 'Electricity', slug: 'electricity-bill', tone: '#ca8a04' },
+  { id: 'flight', label: 'Flights', slug: 'flight', tone: '#0070ba' },
+  { id: 'train', label: 'Trains', slug: 'train', tone: '#059669' },
+  { id: 'bus', label: 'Bus', slug: 'bus', tone: '#e11d48' },
+  { id: 'loan', label: 'Loan EMI', slug: 'loan', tone: '#003087' },
+  { id: 'insurance', label: 'Insurance', slug: 'insurance', tone: '#0f766e' },
+  { id: 'water', label: 'Water', slug: 'water-bill', tone: '#0284c7' },
+  { id: 'broadband', label: 'Broadband', slug: 'broadband', tone: '#4f46e5' },
+  { id: 'more', label: 'More', slug: null, tone: '#64748b' },
 ];
 
 export const operators = ['Jio', 'Airtel', 'Vi', 'BSNL'];

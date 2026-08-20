@@ -93,6 +93,10 @@ Payments use a **sandbox mock** `PaymentService` (`createPayment`, `verifyPaymen
 | `npm run build` | Production build of client |
 | `npm start` | Run API only |
 
+## Contact
+
+**Email:** connect@indiapaynow.in
+
 ## License
 
 Private demo / prototype — for educational and product evaluation use.

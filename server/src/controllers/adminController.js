@@ -108,7 +108,7 @@ export const getSettings = (_req, res) =>
     testModeDefault: true,
     maxTransferLimit: 100000,
     settlementCycle: 'T+1',
-    supportEmail: 'support@indiapaynow.com',
+    supportEmail: 'connect@indiapaynow.in',
   });
 
 export const toggleUser = (req, res) => {

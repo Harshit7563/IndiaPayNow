@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Menu, QrCode, Receipt, Send, User, Wallet } from 'lucide-react';
 import { Logo } from '../components/Logo';
@@ -45,6 +45,8 @@ export function BusinessLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [walletSwitchOpen, setWalletSwitchOpen] = useState(false);
+  const switchTimer = useRef(null);
   const isDevelopers = location.pathname.startsWith('/business/developers');
   const uniqueLinks = [
     ['Overview', '/business', true],
@@ -56,9 +58,32 @@ export function BusinessLayout() {
     ['Settlements', '/business/settlements'],
     ['Refunds', '/business/refunds'],
     ['Reports', '/business/reports'],
+    ['KYC', '/business/kyc'],
     ['Developers', '/business/developers'],
     ['Settings', '/business/settings'],
   ];
+
+  useEffect(
+    () => () => {
+      if (switchTimer.current) clearTimeout(switchTimer.current);
+    },
+    []
+  );
+
+  const startPersonalWalletSwitch = () => {
+    setOpen(false);
+    setWalletSwitchOpen(true);
+    if (switchTimer.current) clearTimeout(switchTimer.current);
+    switchTimer.current = setTimeout(() => {
+      setWalletSwitchOpen(false);
+      navigate('/app');
+    }, 1400);
+  };
+
+  const cancelPersonalWalletSwitch = () => {
+    if (switchTimer.current) clearTimeout(switchTimer.current);
+    setWalletSwitchOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#f7f9fa] lg:flex">
@@ -83,19 +108,17 @@ export function BusinessLayout() {
             ))}
           </nav>
           <div className="border-t border-slate-100 pt-4">
-            <Link to="/app" className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-              <Wallet className="h-4 w-4" /> Personal wallet
-            </Link>
-            <Link
-              to="/login?type=personal&switch=1"
-              className="mt-1 flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            <button
+              type="button"
+              onClick={startPersonalWalletSwitch}
+              className="flex w-full items-center gap-2 rounded-full px-3 py-2 text-left text-sm font-semibold text-slate-600 hover:bg-slate-50"
             >
-              Switch to personal login
-            </Link>
+              <Wallet className="h-4 w-4" /> Personal wallet
+            </button>
             <button
               onClick={() => {
                 logout();
-                navigate('/login');
+                navigate('/login?type=business');
               }}
               className="mt-1 w-full rounded-full px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
             >
@@ -136,6 +159,25 @@ export function BusinessLayout() {
                   </NavLink>
                 ))}
               </nav>
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={startPersonalWalletSwitch}
+                  className="flex w-full items-center gap-2 rounded-full px-3 py-2 text-left text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  <Wallet className="h-4 w-4" /> Personal wallet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    navigate('/login?type=business');
+                  }}
+                  className="mt-1 w-full rounded-full px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                >
+                  Log out
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -143,6 +185,35 @@ export function BusinessLayout() {
           <Outlet />
         </main>
       </div>
+
+      {walletSwitchOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#001c64]/45 p-4">
+          <div className="w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200/80">
+            <div className="h-1.5 w-full bg-gradient-to-r from-[#0070ba] via-[#00baf2] to-[#5ba3d9]" />
+            <div className="px-6 py-8 text-center">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ecfdf5] text-emerald-600">
+                <Wallet className="h-7 w-7" />
+              </span>
+              <h2 className="mt-4 font-display text-xl font-extrabold text-[#111]">Switching to personal wallet</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Opening your personal payments home. Merchant tools stay in Business.
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-1.5">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[#0070ba] [animation-delay:-0.2s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[#00baf2] [animation-delay:-0.1s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[#5ba3d9]" />
+              </div>
+              <button
+                type="button"
+                onClick={cancelPersonalWalletSwitch}
+                className="mt-6 text-sm font-bold text-slate-400 hover:text-slate-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

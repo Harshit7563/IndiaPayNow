@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import db, { initSchema } from './db/database.js';
 import routes from './routes/index.js';
 import { fail } from './utils/helpers.js';
+import { uploadsRoot } from './middleware/upload.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -26,6 +27,7 @@ app.use(
   helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
 app.use(
@@ -50,6 +52,8 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'India Pay Now', port: PORT });
 });
 
+app.use('/uploads', express.static(uploadsRoot));
+app.use('/api/uploads', express.static(uploadsRoot));
 app.use('/api', routes);
 
 if (isProd && fs.existsSync(clientDist)) {

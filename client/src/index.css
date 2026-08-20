@@ -142,10 +142,17 @@ select.input-field {
 
 @keyframes float-soft {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-8px); }
 }
 
-.float-soft { animation: float-soft 5s ease-in-out infinite; }
+.float-soft { animation: float-soft 5.5s ease-in-out infinite; }
+
+@keyframes float-soft-alt {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+.float-soft-alt { animation: float-soft-alt 6.2s ease-in-out infinite; }
 
 @keyframes popup-backdrop {
   from { opacity: 0; }
@@ -177,3 +184,62 @@ select.input-field {
 .travel-box {
   animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+@keyframes merchant-qr-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes merchant-qr-scan {
+  0%, 18% { top: 12%; opacity: 0; }
+  26% { opacity: 1; }
+  48% { top: 82%; opacity: 1; }
+  56%, 100% { top: 82%; opacity: 0; }
+}
+
+@keyframes merchant-qr-phone {
+  0%, 12% { transform: translate(36px, 16px) rotate(16deg); opacity: 0; }
+  24%, 62% { transform: translate(0, 0) rotate(8deg); opacity: 1; }
+  76%, 100% { transform: translate(36px, 16px) rotate(16deg); opacity: 0; }
+}
+
+@keyframes merchant-qr-paid {
+  0%, 50% { opacity: 0; transform: translateY(8px) scale(0.9); }
+  58%, 82% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.94); }
+}
+
+@keyframes merchant-qr-frame {
+  0%, 38% { box-shadow: 0 0 0 0 rgba(0, 186, 242, 0); }
+  50% { box-shadow: 0 0 0 8px rgba(0, 186, 242, 0.2); }
+  68%, 100% { box-shadow: 0 0 0 0 rgba(0, 186, 242, 0); }
+}
+
+@keyframes merchant-lockup {
+  0%, 8% { opacity: 0.28; transform: scale(0.92); }
+  16%, 90% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.28; transform: scale(0.92); }
+}
+
+@keyframes merchant-plus {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+@keyframes merchant-rupee {
+  0%, 48% { opacity: 0; transform: translate(48px, 18px) scale(0.6); }
+  58% { opacity: 1; transform: translate(8px, -8px) scale(1); }
+  78% { opacity: 1; transform: translate(-36px, -22px) scale(1); }
+  100% { opacity: 0; transform: translate(-52px, -36px) scale(0.7); }
+}
+
+.merchant-qr-float { animation: merchant-qr-float 5.4s ease-in-out infinite; }
+.merchant-qr-scan { animation: merchant-qr-scan 5.4s ease-in-out infinite; }
+.merchant-qr-phone { animation: merchant-qr-phone 5.4s ease-in-out infinite; }
+.merchant-qr-paid { animation: merchant-qr-paid 5.4s ease-in-out infinite; }
+.merchant-qr-frame { animation: merchant-qr-frame 5.4s ease-in-out infinite; }
+.merchant-lockup-retail { animation: merchant-lockup 5.4s ease-in-out infinite; }
+.merchant-lockup-qr { animation: merchant-lockup 5.4s ease-in-out infinite 0.35s; }
+.merchant-lockup-ipn { animation: merchant-lockup 5.4s ease-in-out infinite 0.7s; }
+.merchant-plus { animation: merchant-plus 1.6s ease-in-out infinite; }
+.merchant-rupee { animation: merchant-rupee 5.4s ease-in-out infinite; }

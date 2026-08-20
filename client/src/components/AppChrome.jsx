@@ -1,27 +1,18 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  BadgeCheck,
-  BriefcaseBusiness,
   Building2,
   Bus,
   Car,
   ChevronDown,
-  Code2,
   Download,
   Droplets,
   Ellipsis,
-  Fingerprint,
-  Globe2,
   Hotel,
-  IdCard,
   Landmark,
-  Link2,
   LogOut,
   Menu,
   Plane,
-  QrCode,
-  ScanFace,
   ShieldCheck,
   Smartphone,
   TrainFront,
@@ -74,25 +65,13 @@ const menus = [
   },
   {
     label: 'Verification Suite',
-    links: [
-      ['KYC Verification', '/app/kyc', ShieldCheck],
-      ['Aadhaar Verify', '/app/kyc', Fingerprint],
-      ['PAN Verify', '/app/kyc', IdCard],
-      ['Bank Account Verify', '/app/profile', Landmark],
-      ['Face Match', '/app/kyc', ScanFace],
-      ['Credit Score', '/app/bills/credit-score', BadgeCheck],
-    ],
+    href: '/verification',
+    direct: true,
   },
   {
     label: 'For Business',
-    links: [
-      ['Exports', '/for-business/exports', Globe2],
-      ['Merchant Hub', '/app/merchant', BriefcaseBusiness],
-      ['Payment Links', '/app/merchant', Link2],
-      ['QR Payments', '/app/merchant', QrCode],
-      ['Settlements', '/app/merchant', Landmark],
-      ['Open business login', '/login?type=business&switch=1', Code2],
-    ],
+    href: '/for-business',
+    direct: true,
   },
   {
     label: 'Company',
@@ -123,12 +102,14 @@ const barIcons = {
 export function AppChrome({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
   const activeService = params.get('service') || 'mobile';
   const [activeMenu, setActiveMenu] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const firstName = user?.fullName?.split(' ')[0] || 'there';
+  const hideServiceBar = location.pathname.startsWith('/app/profile');
 
   const toggleMenu = (label) => setActiveMenu((current) => (current === label ? null : label));
 
@@ -151,6 +132,17 @@ export function AppChrome({ children }) {
           <nav className="hidden min-w-0 flex-1 items-center gap-0.5 lg:flex">
             {menus.map((menu, index) => {
               const align = index >= 4 ? 'right' : index === 0 ? 'left' : 'center';
+              if (menu.direct) {
+                return (
+                  <Link
+                    key={menu.label}
+                    to={menu.href}
+                    className="inline-flex items-center whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] font-semibold text-black hover:bg-slate-50"
+                  >
+                    {menu.label}
+                  </Link>
+                );
+              }
               return (
                 <div key={menu.label} className="relative">
                   <button
@@ -182,8 +174,12 @@ export function AppChrome({ children }) {
                 onClick={() => setProfileOpen((v) => !v)}
                 className="flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-2 hover:bg-slate-50"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00baf2] text-sm font-bold text-white">
-                  {firstName[0]}
+                <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#00baf2] text-sm font-bold text-white">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    firstName[0]
+                  )}
                 </span>
                 <span className="hidden text-sm font-semibold text-[#002970] sm:inline">Hi, {firstName}</span>
               </button>
@@ -194,6 +190,15 @@ export function AppChrome({ children }) {
                     <Link to="/app/profile" className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-slate-50" onClick={() => setProfileOpen(false)}>
                       <User className="h-4 w-4" /> Profile
                     </Link>
+                    {user?.role === 'merchant' ? (
+                      <Link
+                        to="/business"
+                        className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-slate-50"
+                        onClick={() => setProfileOpen(false)}
+                      >
+                        <Building2 className="h-4 w-4" /> Business dashboard
+                      </Link>
+                    ) : null}
                     <button
                       className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       onClick={() => {
@@ -212,31 +217,57 @@ export function AppChrome({ children }) {
 
       </header>
 
-      <div className="bg-[#002970] text-white">
-        <div className="flex gap-0 overflow-x-auto px-3 py-3">
-          {shortcutServices.map((item) => {
-            const Icon = barIcons[item.id];
-            const selected = activeService === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  if (item.id === 'more') navigate('/app/payments');
-                  else navigate(`/app?service=${item.id}`);
-                }}
-                className={`flex min-w-[96px] flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-2.5 text-center ${
-                  selected ? 'bg-white/10' : 'hover:bg-white/5'
-                }`}
-              >
-                <Icon className="h-7 w-7" />
-                <span className="text-xs font-semibold leading-tight">{item.label}</span>
-                {selected && <span className="mt-0.5 h-0.5 w-8 rounded-full bg-[#00baf2]" />}
-              </button>
-            );
-          })}
+      {!hideServiceBar && (
+        <div className="border-b border-slate-200/80 bg-white">
+          <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-3 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2 sm:px-4 sm:py-3.5">
+            {shortcutServices.map((item) => {
+              const Icon = barIcons[item.id];
+              const selected = activeService === item.id;
+              const tone = item.tone || '#0070ba';
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    if (item.id === 'more') navigate('/app/payments');
+                    else navigate(`/app?service=${item.id}`);
+                  }}
+                  className={`group flex min-w-[72px] flex-1 flex-col items-center gap-2 rounded-2xl px-2.5 py-2 text-center transition sm:min-w-[84px] ${
+                    selected ? 'bg-[#f0f7ff]' : 'hover:bg-slate-50'
+                  }`}
+                >
+                  <span
+                    className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-sm ring-1 transition sm:h-12 sm:w-12 ${
+                      selected
+                        ? 'text-white shadow-md ring-transparent'
+                        : 'bg-white text-slate-600 ring-slate-200 group-hover:ring-slate-300'
+                    }`}
+                    style={
+                      selected
+                        ? { background: `linear-gradient(145deg, ${tone}, ${tone}cc)` }
+                        : { color: tone }
+                    }
+                  >
+                    <Icon className="h-5 w-5 sm:h-[22px] sm:w-[22px]" strokeWidth={selected ? 2.25 : 1.9} />
+                  </span>
+                  <span
+                    className={`max-w-[4.75rem] text-[11px] font-bold leading-tight sm:max-w-none sm:text-xs ${
+                      selected ? 'text-[#002970]' : 'text-slate-600'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  <span
+                    className={`h-0.5 w-6 rounded-full transition ${
+                      selected ? 'bg-[#00baf2] opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">

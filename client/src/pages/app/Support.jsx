@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { Button, Card, EmptyState, Input, PageHeader, Textarea, Badge } from '../../components/ui';
 import api from '../../services/api';
 import { formatDate, statusColor } from '../../utils/format';
+import { CONTACT_EMAIL } from '../../data/siteConfig';
 import { Headphones } from 'lucide-react';
 
 export default function Support() {
@@ -31,6 +32,12 @@ export default function Support() {
   return (
     <div className="mx-auto max-w-2xl fade-up">
       <PageHeader title="Customer Support" subtitle="Disputes, chargebacks, fraud alerts and help." />
+      <p className="mb-4 text-sm text-slate-600">
+        Or email us at{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-[#0070ba] hover:underline">
+          {CONTACT_EMAIL}
+        </a>
+      </p>
       <Card className="mb-6">
         <form onSubmit={submit} className="space-y-4">
           <Input label="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Payment failed / refund / fraud" />

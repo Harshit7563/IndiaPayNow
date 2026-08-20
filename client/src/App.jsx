@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes, useSearchParams } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext';
 import { AppLayout, BusinessLayout, AdminLayout } from './layouts/AppLayout';
@@ -44,11 +44,20 @@ import AdminComplaints from './pages/admin/Complaints';
 import AdminApiLogs from './pages/admin/ApiLogs';
 import AdminSettings from './pages/admin/Settings';
 import MarketingPage from './pages/MarketingPage';
+import TrustAndSafety from './pages/TrustAndSafety';
+import ForBusiness from './pages/ForBusiness';
+import BusinessOnboarding from './pages/BusinessOnboarding';
+import VerificationSuite from './pages/VerificationSuite';
+import VerificationCategories from './pages/VerificationCategories';
+import VerificationServices from './pages/VerificationServices';
+import VerificationServiceDetail from './pages/VerificationServiceDetail';
+import CatalogServiceDetail from './pages/CatalogServiceDetail';
 import { marketingPagePaths } from './data/marketingPages';
 import { destinationForLogin, normalizeAccountIntent } from './utils/authRouting';
 
 function ProtectedRoute({ roles }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface">
@@ -56,7 +65,10 @@ function ProtectedRoute({ roles }) {
       </div>
     );
   }
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    const to = location.pathname.startsWith('/business') ? '/login?type=business' : '/login';
+    return <Navigate to={to} replace />;
+  }
   if (roles && !roles.includes(user.role)) {
     // Personal accounts opening /business go to merchant activation, not a random bounce
     if (roles.includes('merchant') && user.role === 'user') {
@@ -69,14 +81,20 @@ function ProtectedRoute({ roles }) {
 
 function PublicOnly() {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   if (loading) return null;
   const switching = searchParams.get('switch') === '1';
   if (user && !switching) {
-    const intent = normalizeAccountIntent(searchParams.get('type') || searchParams.get('account'));
+    const fromQuery = normalizeAccountIntent(searchParams.get('type') || searchParams.get('account'));
+    const fromPath = location.pathname.startsWith('/for-business')
+      ? 'business'
+      : location.pathname.startsWith('/login') || location.pathname.startsWith('/register')
+        ? 'personal'
+        : null;
     return (
       <Navigate
-        to={destinationForLogin(user, intent, searchParams.get('redirect'))}
+        to={destinationForLogin(user, fromQuery || fromPath, searchParams.get('redirect'))}
         replace
       />
     );
@@ -89,17 +107,41 @@ export default function App() {
     <>
       <Toaster
         position="top-center"
+        gutter={12}
+        containerStyle={{ top: 16 }}
         toastOptions={{
+          duration: 3500,
           style: {
-            borderRadius: '12px',
-            background: '#0b1f3a',
-            color: '#fff',
-            fontSize: '14px',
+            borderRadius: '16px',
+            background: '#fff',
+            color: '#111',
+            fontSize: '13px',
+            fontWeight: 600,
+            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.14)',
+            border: '1px solid rgba(226, 232, 240, 0.95)',
+            padding: '12px 14px',
+            maxWidth: '22rem',
+          },
+          success: {
+            iconTheme: { primary: '#00baf2', secondary: '#fff' },
+          },
+          error: {
+            iconTheme: { primary: '#ef4444', secondary: '#fff' },
+            style: {
+              borderColor: 'rgba(254, 202, 202, 0.9)',
+            },
           },
         }}
       />
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/trust-and-safety" element={<TrustAndSafety />} />
+        <Route path="/for-business" element={<ForBusiness />} />
+        <Route path="/verification" element={<VerificationSuite />} />
+        <Route path="/verification/categories" element={<VerificationCategories />} />
+        <Route path="/verification/services/:serviceId" element={<VerificationServiceDetail />} />
+        <Route path="/verification/services" element={<VerificationServices />} />
+        <Route path="/services/:slug" element={<CatalogServiceDetail />} />
         <Route path="/pay/:slug" element={<PublicPay />} />
         {marketingPagePaths.map((path) => (
           <Route key={path} path={path} element={<MarketingPage />} />
@@ -108,6 +150,7 @@ export default function App() {
         <Route element={<PublicOnly />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/for-business/open-account" element={<BusinessOnboarding />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
 
@@ -142,6 +185,7 @@ export default function App() {
             <Route path="settlements" element={<Settlements />} />
             <Route path="refunds" element={<BusinessRefunds />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="kyc" element={<Kyc />} />
             <Route path="developers" element={<Developers />} />
             <Route path="settings" element={<BusinessSettings />} />
           </Route>

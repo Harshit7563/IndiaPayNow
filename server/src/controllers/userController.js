@@ -1,9 +1,21 @@
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
 import db from '../db/database.js';
 import paymentService from '../services/paymentService.js';
 import { generateId, generateTxnId, success, fail } from '../utils/helpers.js';
 import { createNotification } from '../middleware/audit.js';
+import { avatarsDir } from '../middleware/upload.js';
 import { sanitizeUser } from './authController.js';
+import { issueAndSendOtp } from '../services/smsOtp.js';
+
+const removeLocalAvatar = (avatarUrl) => {
+  if (!avatarUrl) return;
+  const match = avatarUrl.match(/\/(?:api\/)?uploads\/avatars\/([^/?#]+)$/);
+  if (!match) return;
+  const filePath = path.join(avatarsDir, match[1]);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+};
 
 export const getWallet = (req, res) => {
   const user = db.prepare('SELECT wallet_balance, upi_id FROM users WHERE id = ?').get(req.user.id);
@@ -163,25 +175,130 @@ export const updateProfile = (req, res) => {
   return success(res, sanitizeUser(user), 'Profile updated');
 };
 
+export const uploadAvatar = (req, res) => {
+  if (!req.file) return fail(res, 'Please choose a profile photo', 400);
+
+  const avatarUrl = `/api/uploads/avatars/${req.file.filename}`;
+  removeLocalAvatar(req.user.avatar_url);
+
+  db.prepare(`UPDATE users SET avatar_url = ?, updated_at = datetime('now') WHERE id = ?`).run(
+    avatarUrl,
+    req.user.id
+  );
+
+  createNotification(req.user.id, 'security', 'Profile photo updated', 'Your profile picture was changed.');
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  return success(res, sanitizeUser(user), 'Profile photo updated');
+};
+
+export const removeAvatar = (req, res) => {
+  removeLocalAvatar(req.user.avatar_url);
+  db.prepare(`UPDATE users SET avatar_url = NULL, updated_at = datetime('now') WHERE id = ?`).run(req.user.id);
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  return success(res, sanitizeUser(user), 'Profile photo removed');
+};
+
 export const updatePreferences = (req, res) => {
-  const { emailNotifications, smsNotifications, paymentNotifications, twoFaEnabled } = req.body;
+  const { emailNotifications, smsNotifications, paymentNotifications } = req.body;
+  // twoFaEnabled requires OTP confirmation via /user/2fa/* endpoints
   db.prepare(
     `UPDATE users SET
       email_notifications = COALESCE(?, email_notifications),
       sms_notifications = COALESCE(?, sms_notifications),
       payment_notifications = COALESCE(?, payment_notifications),
-      two_fa_enabled = COALESCE(?, two_fa_enabled),
       updated_at = datetime('now')
      WHERE id = ?`
   ).run(
     emailNotifications === undefined ? null : emailNotifications ? 1 : 0,
     smsNotifications === undefined ? null : smsNotifications ? 1 : 0,
     paymentNotifications === undefined ? null : paymentNotifications ? 1 : 0,
-    twoFaEnabled === undefined ? null : twoFaEnabled ? 1 : 0,
     req.user.id
   );
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
   return success(res, sanitizeUser(user), 'Preferences updated');
+};
+
+export const requestTwoFaOtp = async (req, res) => {
+  const enable = !!req.body.enable;
+  const currentlyEnabled = !!req.user.two_fa_enabled;
+
+  if (enable === currentlyEnabled) {
+    return fail(res, enable ? '2FA is already enabled' : '2FA is already disabled');
+  }
+
+  const mobile = req.user.mobile;
+  if (!mobile) return fail(res, 'No mobile number on this account', 400);
+
+  const purpose = enable ? 'enable_2fa' : 'disable_2fa';
+
+  try {
+    const sent = await issueAndSendOtp(mobile, purpose);
+    createNotification(
+      req.user.id,
+      'security',
+      enable ? '2FA enable OTP' : '2FA disable OTP',
+      `OTP sent to ${sent.mobileMasked} to ${enable ? 'enable' : 'disable'} two-factor authentication.`
+    );
+
+    return success(
+      res,
+      {
+        mobile: sent.mobile,
+        mobileMasked: sent.mobileMasked,
+        enable,
+        expiresIn: sent.expiresIn,
+      },
+      `OTP sent to ${sent.mobileMasked}`
+    );
+  } catch (error) {
+    return fail(res, error.message || 'Could not send OTP', error.status || 502);
+  }
+};
+
+export const confirmTwoFa = (req, res) => {
+  const enable = !!req.body.enable;
+  const code = String(req.body.code || '').trim();
+  const currentlyEnabled = !!req.user.two_fa_enabled;
+
+  if (enable === currentlyEnabled) {
+    return fail(res, enable ? '2FA is already enabled' : '2FA is already disabled');
+  }
+  if (!/^\d{6}$/.test(code)) return fail(res, 'Enter a valid 6-digit OTP', 400);
+
+  const mobile = req.user.mobile;
+  if (!mobile) return fail(res, 'No mobile number on this account', 400);
+
+  const purpose = enable ? 'enable_2fa' : 'disable_2fa';
+  const otp = db
+    .prepare(
+      `SELECT * FROM otp_codes WHERE identifier = ? AND purpose = ? AND used = 0
+       AND datetime(expires_at) > datetime('now') ORDER BY created_at DESC LIMIT 1`
+    )
+    .get(mobile, purpose);
+
+  if (!otp || otp.code !== code) return fail(res, 'Invalid or expired OTP', 400);
+
+  db.prepare('UPDATE otp_codes SET used = 1 WHERE id = ?').run(otp.id);
+  db.prepare(
+    `UPDATE users SET two_fa_enabled = ?, updated_at = datetime('now') WHERE id = ?`
+  ).run(enable ? 1 : 0, req.user.id);
+
+  createNotification(
+    req.user.id,
+    'security',
+    enable ? '2FA Enabled' : '2FA Disabled',
+    enable
+      ? 'Two-factor authentication is now on for your account.'
+      : 'Two-factor authentication has been turned off.'
+  );
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  return success(
+    res,
+    sanitizeUser(user),
+    enable ? '2FA enabled successfully' : '2FA disabled successfully'
+  );
 };
 
 export const changePassword = (req, res) => {

@@ -1,20 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  BadgeCheck,
-  BriefcaseBusiness,
   Building2,
   ChevronDown,
-  Code2,
-  Fingerprint,
-  Globe2,
-  IdCard,
-  Landmark,
-  Link2,
   Menu,
   Newspaper,
-  QrCode,
-  ScanFace,
   ShieldCheck,
   UserRound,
   Users,
@@ -22,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { NavMegaMenu } from './NavMegaMenu';
-import { serviceCatalog } from '../data/services';
+import { serviceCatalog, catalogServicePath } from '../data/services';
 
 const byGroup = (id) => serviceCatalog.find((g) => g.id === id)?.items || [];
 
@@ -37,7 +27,7 @@ const menus = [
   },
   {
     label: 'Ticket Booking',
-    href: '/login',
+    href: '/services/flight',
     columns: [
       {
         title: 'Travel & Movies',
@@ -62,28 +52,13 @@ const menus = [
   },
   {
     label: 'Verification Suite',
-    href: '/verification/kyc',
-    links: [
-      ['KYC Verification', '/verification/kyc', ShieldCheck],
-      ['Aadhaar Verify', '/verification/aadhaar', Fingerprint],
-      ['PAN Verify', '/verification/pan', IdCard],
-      ['Bank Account Verify', '/verification/bank', Landmark],
-      ['Face Match', '/verification/face', ScanFace],
-      ['Credit Score', '/verification/credit-score', BadgeCheck],
-    ],
+    href: '/verification',
+    direct: true,
   },
   {
     label: 'For Business',
-    href: '/for-business/exports',
-    links: [
-      ['Exports', '/for-business/exports', Globe2],
-      ['Payment Links', '/for-business/payment-links', Link2],
-      ['Merchant QR', '/for-business/merchant-qr', QrCode],
-      ['Settlements', '/for-business/settlements', Building2],
-      ['Developer APIs', '/for-business/developer-apis', Code2],
-      ['Open business account', '/register?type=business', BriefcaseBusiness],
-      ['Business login', '/login?type=business', BriefcaseBusiness],
-    ],
+    href: '/for-business',
+    direct: true,
   },
   {
     label: 'Company',
@@ -93,6 +68,7 @@ const menus = [
       ['Careers', '/company/careers', Users],
       ['Press', '/company/press', Newspaper],
       ['Blog', '/company/blog', Newspaper],
+      ['Trust & Safety', '/trust-and-safety', ShieldCheck],
       ['Help Centre', '/company/about-us', UserRound],
     ],
   },
@@ -101,7 +77,7 @@ const menus = [
 function ServiceLink({ slug, label, Icon, onNavigate }) {
   return (
     <Link
-      to={`/app/bills/${slug}`}
+      to={catalogServicePath(slug)}
       onClick={onNavigate}
       className="flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 hover:bg-brand-50"
     >
@@ -188,6 +164,17 @@ export function SiteHeader() {
           <nav className="relative hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
             {menus.map((menu, index) => {
               const align = index >= 4 ? 'right' : index === 0 ? 'left' : 'center';
+              if (menu.direct) {
+                return (
+                  <Link
+                    key={menu.label}
+                    to={menu.href}
+                    className="inline-flex items-center whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold text-black hover:bg-white/70"
+                  >
+                    {menu.label}
+                  </Link>
+                );
+              }
               return (
                 <div key={menu.label} className="relative">
                   <button
@@ -249,25 +236,36 @@ export function SiteHeader() {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 pb-[max(7rem,env(safe-area-inset-bottom))]">
-            {menus.map((menu) => (
-              <div key={menu.label} className="border-b border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setMobileMenu(mobileMenu === menu.label ? null : menu.label)}
-                  className="flex min-h-[48px] w-full items-center justify-between py-3.5 text-left text-base font-semibold text-black"
+            {menus.map((menu) =>
+              menu.direct ? (
+                <Link
+                  key={menu.label}
+                  to={menu.href}
+                  onClick={closeMobile}
+                  className="flex min-h-[48px] items-center border-b border-slate-100 py-3.5 text-base font-semibold text-black"
                 >
                   {menu.label}
-                  <ChevronDown
-                    className={`h-4 w-4 text-black transition ${mobileMenu === menu.label ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {mobileMenu === menu.label ? (
-                  <div className="pb-4">
-                    <MenuPanel menu={menu} onNavigate={closeMobile} />
-                  </div>
-                ) : null}
-              </div>
-            ))}
+                </Link>
+              ) : (
+                <div key={menu.label} className="border-b border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenu(mobileMenu === menu.label ? null : menu.label)}
+                    className="flex min-h-[48px] w-full items-center justify-between py-3.5 text-left text-base font-semibold text-black"
+                  >
+                    {menu.label}
+                    <ChevronDown
+                      className={`h-4 w-4 text-black transition ${mobileMenu === menu.label ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {mobileMenu === menu.label ? (
+                    <div className="pb-4">
+                      <MenuPanel menu={menu} onNavigate={closeMobile} />
+                    </div>
+                  ) : null}
+                </div>
+              )
+            )}
             <Link
               to="/login"
               onClick={closeMobile}

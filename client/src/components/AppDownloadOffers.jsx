@@ -77,7 +77,7 @@ export function GiftOfferCard({ active, onSelect }) {
 
 export function AppDownloadOffers() {
   return (
-    <section className="mx-auto max-w-6xl px-4 pb-16 md:pb-20">
+    <section id="gifts" className="mx-auto max-w-6xl px-4 py-16 md:py-20">
       <div className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.06)] md:rounded-[2rem]">
         <div className="grid gap-0 md:grid-cols-[1.15fr_0.85fr]">
           <div className="bg-[linear-gradient(145deg,#0070ba_0%,#003087_55%,#001c64_100%)] p-6 text-white sm:p-8 md:p-10">

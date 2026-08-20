@@ -102,6 +102,39 @@ for (const [type, amount, status, recipient, note] of txnTypes) {
   );
 }
 
+const personalFlow = [
+  ['add_money', 4200, 'Salary top-up', null],
+  ['send_money', 280, 'Swiggy', 'food@upi'],
+  ['mobile_recharge', 299, 'Jio recharge', '9876543210'],
+  ['send_money', 150, 'Metro card', 'dmrc@upi'],
+  ['add_money', 1500, 'Wallet top-up', null],
+  ['electricity_bill', 980, 'BESCOM', 'BESCOM-8821'],
+  ['send_money', 640, 'Rent share', 'ananya@okicici'],
+  ['send_money', 90, 'Chai', 'rahul@indpaynow'],
+];
+
+for (let day = 0; day < 14; day += 1) {
+  const count = 1 + (day % 3);
+  for (let i = 0; i < count; i += 1) {
+    const [type, baseAmount, note, recipient] = personalFlow[(day + i) % personalFlow.length];
+    const amount = Math.round(baseAmount * (0.85 + ((day + i) % 5) * 0.07));
+    db.prepare(
+      `INSERT INTO transactions (id, user_id, type, amount, fee, total_amount, payment_method, status, recipient, note, created_at)
+       VALUES (?, ?, ?, ?, 0, ?, 'wallet', 'success', ?, ?, datetime('now', ?, ?))`
+    ).run(
+      generateTxnId(),
+      userId,
+      type,
+      amount,
+      amount,
+      recipient,
+      note,
+      `-${day} days`,
+      `-${(i * 3 + 2) % 20} hours`
+    );
+  }
+}
+
 const customers = [
   ['Amit Kumar', 'amit@email.com', '9900112233', 2500],
   ['Sneha Reddy', 'sneha@email.com', '9900223344', 1800],
