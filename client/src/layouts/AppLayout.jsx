@@ -53,7 +53,7 @@ export function BusinessLayout() {
     ['Customers', '/business/customers'],
     ['Payment Links', '/business/payment-links'],
     ['QR Payments', '/business/qr'],
-    ['UPI Cash Point', '/business/qr?type=cashpoint'],
+    ['UPI Cash Point', '/business/cashpoint'],
     ['Settlements', '/business/settlements'],
     ['Refunds', '/business/refunds'],
     ['Reports', '/business/reports'],

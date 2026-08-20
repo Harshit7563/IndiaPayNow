@@ -28,6 +28,7 @@ import BusinessTransactions from './pages/business/Transactions';
 import BusinessCustomers from './pages/business/Customers';
 import PaymentLinks from './pages/business/PaymentLinks';
 import MerchantQR from './pages/business/MerchantQR';
+import CashPoint from './pages/business/CashPoint';
 import Settlements from './pages/business/Settlements';
 import BusinessRefunds from './pages/business/Refunds';
 import Reports from './pages/business/Reports';
@@ -182,6 +183,7 @@ export default function App() {
             <Route path="customers" element={<BusinessCustomers />} />
             <Route path="payment-links" element={<PaymentLinks />} />
             <Route path="qr" element={<MerchantQR />} />
+            <Route path="cashpoint" element={<CashPoint />} />
             <Route path="settlements" element={<Settlements />} />
             <Route path="refunds" element={<BusinessRefunds />} />
             <Route path="reports" element={<Reports />} />
