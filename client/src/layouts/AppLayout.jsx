@@ -63,12 +63,12 @@ export function BusinessLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f7f9fa] lg:flex">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-[#e5e7eb] bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-hidden">
+    <div className="min-h-screen bg-[#f7f9fa]">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-[#e5e7eb] bg-white lg:flex">
         <div className="flex h-full flex-col p-5">
           <Logo />
           <p className="mt-6 text-[11px] font-bold uppercase tracking-wider text-slate-400">Business</p>
-          <nav className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto">
+          <nav className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain">
             {uniqueLinks.map(([label, to, end]) => (
               <NavLink
                 key={to + label}
@@ -86,6 +86,7 @@ export function BusinessLayout() {
           </nav>
           <div className="shrink-0 border-t border-slate-100 pt-4">
             <button
+              type="button"
               onClick={() => {
                 logout();
                 navigate('/login?type=business');
@@ -97,10 +98,11 @@ export function BusinessLayout() {
           </div>
         </div>
       </aside>
-      <div className="min-w-0 flex-1">
+
+      <div className="min-w-0 lg:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#e5e7eb] bg-white px-4">
           <div className="flex items-center gap-3">
-            <button className="rounded-full p-2 lg:hidden" onClick={() => setOpen(true)}>
+            <button type="button" className="rounded-full p-2 lg:hidden" onClick={() => setOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>
             <div>
@@ -109,10 +111,10 @@ export function BusinessLayout() {
             </div>
           </div>
         </header>
-        {open && (
+        {open ? (
           <div className="fixed inset-0 z-40 lg:hidden">
-            <button className="absolute inset-0 bg-[#001c64]/40" onClick={() => setOpen(false)} />
-            <div className="absolute left-0 top-0 h-full w-72 overflow-y-auto bg-white p-5">
+            <button type="button" className="absolute inset-0 bg-[#001c64]/40" onClick={() => setOpen(false)} />
+            <div className="absolute left-0 top-0 flex h-full w-72 flex-col overflow-y-auto bg-white p-5">
               <Logo />
               <nav className="mt-6 space-y-1">
                 {uniqueLinks.map(([label, to, end]) => (
@@ -143,7 +145,7 @@ export function BusinessLayout() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
         <main className={isDevelopers ? 'w-full p-0' : 'mx-auto max-w-6xl p-4 md:p-6'}>
           <Outlet />
         </main>
@@ -169,11 +171,11 @@ export function AdminLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f7f9fa] lg:flex">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-[#e5e7eb] bg-[#001c64] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-hidden">
+    <div className="min-h-screen bg-[#f7f9fa]">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-[#e5e7eb] bg-[#001c64] text-white lg:flex">
         <div className="flex h-full flex-col p-5">
           <Logo className="[&_.text-navy-900]:text-white [&_.text-slate-500]:text-blue-200" />
-          <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-y-auto">
+          <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain">
             {links.map(([label, to, end]) => (
               <NavLink
                 key={to}
@@ -190,6 +192,7 @@ export function AdminLayout() {
             ))}
           </nav>
           <button
+            type="button"
             onClick={() => {
               logout();
               navigate('/login');
@@ -200,8 +203,10 @@ export function AdminLayout() {
           </button>
         </div>
       </aside>
-      <main className="min-w-0 flex-1 p-4 md:p-6">
-        <Outlet />
+      <main className="min-w-0 p-4 md:p-6 lg:pl-64">
+        <div className="lg:pl-4 xl:pl-6">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
