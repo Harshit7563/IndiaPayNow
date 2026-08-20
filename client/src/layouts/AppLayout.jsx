@@ -64,11 +64,11 @@ export function BusinessLayout() {
 
   return (
     <div className="min-h-screen bg-[#f7f9fa] lg:flex">
-      <aside className="hidden w-64 shrink-0 border-r border-[#e5e7eb] bg-white lg:block">
-        <div className="sticky top-0 flex h-screen flex-col p-5">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-[#e5e7eb] bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-hidden">
+        <div className="flex h-full flex-col p-5">
           <Logo />
           <p className="mt-6 text-[11px] font-bold uppercase tracking-wider text-slate-400">Business</p>
-          <nav className="mt-3 flex-1 space-y-1 overflow-y-auto">
+          <nav className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto">
             {uniqueLinks.map(([label, to, end]) => (
               <NavLink
                 key={to + label}
@@ -84,7 +84,7 @@ export function BusinessLayout() {
               </NavLink>
             ))}
           </nav>
-          <div className="border-t border-slate-100 pt-4">
+          <div className="shrink-0 border-t border-slate-100 pt-4">
             <button
               onClick={() => {
                 logout();
@@ -97,7 +97,7 @@ export function BusinessLayout() {
           </div>
         </div>
       </aside>
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#e5e7eb] bg-white px-4">
           <div className="flex items-center gap-3">
             <button className="rounded-full p-2 lg:hidden" onClick={() => setOpen(true)}>
@@ -170,10 +170,10 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-[#f7f9fa] lg:flex">
-      <aside className="hidden w-64 border-r border-[#e5e7eb] bg-[#001c64] text-white lg:block">
-        <div className="sticky top-0 flex h-screen flex-col p-5">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-[#e5e7eb] bg-[#001c64] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-hidden">
+        <div className="flex h-full flex-col p-5">
           <Logo className="[&_.text-navy-900]:text-white [&_.text-slate-500]:text-blue-200" />
-          <nav className="mt-8 flex-1 space-y-1">
+          <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-y-auto">
             {links.map(([label, to, end]) => (
               <NavLink
                 key={to}
@@ -194,13 +194,13 @@ export function AdminLayout() {
               logout();
               navigate('/login');
             }}
-            className="rounded-full px-3 py-2 text-left text-sm font-semibold text-blue-100 hover:bg-white/5"
+            className="shrink-0 rounded-full px-3 py-2 text-left text-sm font-semibold text-blue-100 hover:bg-white/5"
           >
             Log out
           </button>
         </div>
       </aside>
-      <main className="flex-1 p-4 md:p-6">
+      <main className="min-w-0 flex-1 p-4 md:p-6">
         <Outlet />
       </main>
     </div>
