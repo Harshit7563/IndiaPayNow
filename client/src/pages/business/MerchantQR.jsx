@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Download, Printer, QrCode, Share2 } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import { formatINR } from '../../utils/format';
+import { downloadBrandedQr } from '../../utils/downloadBrandedQr';
+import { BrandedQrCard } from '../../components/BrandedQrCard';
+import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Input, PageHeader, Select, Textarea } from '../../components/ui';
 
 const normalizeQr = (qr) => {
@@ -19,16 +21,25 @@ const normalizeQr = (qr) => {
 };
 
 export default function MerchantQR() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [preview, setPreview] = useState(null);
+  const [businessName, setBusinessName] = useState(user?.businessName || user?.fullName || 'Merchant');
   const [form, setForm] = useState({ type: 'dynamic', amount: '', description: '' });
   const [loading, setLoading] = useState(false);
   const qrRef = useRef(null);
 
   const load = async () => {
     try {
-      const { data } = await api.get('/merchant/qr');
-      const payload = data.data || data;
+      const [{ data: qrData }, profile] = await Promise.all([
+        api.get('/merchant/qr'),
+        api.get('/merchant/profile').catch(() => null),
+      ]);
+      const business = profile?.data?.data || profile?.data;
+      if (business?.businessName || business?.name) {
+        setBusinessName(business.businessName || business.name);
+      }
+      const payload = qrData.data || qrData;
       const list = Array.isArray(payload?.codes)
         ? payload.codes
         : Array.isArray(payload?.qrCodes)
@@ -79,15 +90,23 @@ export default function MerchantQR() {
     }
   };
 
-  const download = () => {
+  const download = async () => {
     const svg = qrRef.current?.querySelector('svg');
-    if (!svg || !preview) return;
-    const blob = new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `india-pay-now-${preview.id || 'qr'}.svg`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    if (!svg || !preview) return toast.error('QR code is not ready');
+    try {
+      await downloadBrandedQr({
+        qrSvg: svg,
+        businessName,
+        amountLabel: preview.amount ? formatINR(preview.amount) : '',
+        note: preview.description || '',
+        typeLabel: `${preview.type || 'Merchant'} QR`,
+        fileName: `india-pay-now-${preview.id || 'qr'}`,
+        format: 'png',
+      });
+      toast.success('Branded QR downloaded');
+    } catch {
+      toast.error('Could not download QR');
+    }
   };
 
   const share = async () => {
@@ -141,15 +160,15 @@ export default function MerchantQR() {
 
         <Card className="text-center">
           {active?.payload ? (
-            <div ref={qrRef}>
-              <div className="mx-auto inline-block rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                <QRCodeSVG value={active.payload} size={220} level="H" fgColor="#0b1f3a" includeMargin />
-              </div>
-              <h3 className="mt-4 font-bold capitalize">{active.type || 'Merchant'} QR</h3>
-              {active.amount ? (
-                <p className="mt-1 font-display text-2xl font-extrabold text-[#001c64]">{formatINR(active.amount)}</p>
-              ) : null}
-              <p className="mt-1 text-sm text-slate-500">{active.description || 'Scan with any UPI app'}</p>
+            <div>
+              <BrandedQrCard
+                qrRef={qrRef}
+                value={active.payload}
+                businessName={businessName}
+                amountLabel={active.amount ? formatINR(active.amount) : ''}
+                note={active.description || ''}
+                typeLabel={`${active.type || 'Merchant'} QR`}
+              />
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <Button variant="secondary" type="button" onClick={download}>
                   <Download className="h-4 w-4" /> Download
