@@ -449,3 +449,33 @@ export const getReports = (req, res) => {
 
   return success(res, { daily });
 };
+
+export const getMerchantProfile = (req, res) => {
+  const merchant = getMerchant(req.user.id);
+  if (!merchant) return fail(res, 'Merchant profile not found', 404);
+
+  const bank = db
+    .prepare(
+      `SELECT account_holder, account_number, ifsc, bank_name
+       FROM bank_accounts WHERE user_id = ? ORDER BY is_default DESC, created_at DESC LIMIT 1`
+    )
+    .get(req.user.id);
+
+  return success(res, {
+    id: merchant.id,
+    merchantId: merchant.id,
+    businessName: merchant.business_name,
+    name: merchant.business_name,
+    businessType: merchant.business_type,
+    gstin: merchant.gstin,
+    gstNumber: merchant.gstin,
+    settlementCycle: merchant.settlement_cycle,
+    email: req.user.email,
+    mobile: req.user.mobile,
+    phone: req.user.mobile,
+    address: bank
+      ? `${bank.bank_name} · ${bank.ifsc}`
+      : null,
+    bank: bank || null,
+  });
+};

@@ -48,6 +48,7 @@ import {
   getMerchantQr,
   getCustomers,
   getReports,
+  getMerchantProfile,
 } from '../controllers/merchantController.js';
 import {
   listApiKeys,
@@ -316,6 +317,7 @@ router.post('/settlements/request', authenticate, authorize('merchant', 'admin')
 router.get('/reports', authenticate, authorize('merchant', 'admin'), getReports);
 router.get('/refunds', authenticate, authorize('merchant', 'admin'), getRefunds);
 router.get('/merchant/overview', authenticate, authorize('merchant', 'admin'), getOverview);
+router.get('/merchant/profile', authenticate, authorize('merchant', 'admin'), getMerchantProfile);
 router.get('/merchant/customers', authenticate, authorize('merchant', 'admin'), getCustomers);
 router.post('/merchant/qr', authenticate, authorize('merchant', 'admin'), createMerchantQr);
 router.get('/merchant/qr', authenticate, authorize('merchant', 'admin'), getMerchantQr);
