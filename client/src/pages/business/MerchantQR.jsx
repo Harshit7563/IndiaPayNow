@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Printer, QrCode, Share2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import { formatINR } from '../../utils/format';
@@ -7,6 +8,16 @@ import { downloadBrandedQr, printBrandedQr } from '../../utils/downloadBrandedQr
 import { BrandedQrCard } from '../../components/BrandedQrCard';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Input, PageHeader, Select, Textarea } from '../../components/ui';
+
+const BUSINESS_FOOTER = 'UPI · Cash Point · GPay · PhonePe · Paytm · BHIM';
+const CASH_POINT_MAX = 5000;
+
+const typeLabelFor = (type) => {
+  if (type === 'cashpoint') return 'UPI Cash Point';
+  if (type === 'amount') return 'Fixed amount QR';
+  if (type === 'dynamic') return 'Dynamic QR';
+  return 'Static QR';
+};
 
 const normalizeQr = (qr) => {
   if (!qr) return null;
@@ -22,12 +33,20 @@ const normalizeQr = (qr) => {
 
 export default function MerchantQR() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const initialType = searchParams.get('type') === 'cashpoint' ? 'cashpoint' : 'dynamic';
   const [items, setItems] = useState([]);
   const [preview, setPreview] = useState(null);
   const [businessName, setBusinessName] = useState(user?.businessName || user?.fullName || 'Merchant');
-  const [form, setForm] = useState({ type: 'dynamic', amount: '', description: '' });
+  const [form, setForm] = useState({ type: initialType, amount: '', description: '' });
   const [loading, setLoading] = useState(false);
   const qrRef = useRef(null);
+
+  useEffect(() => {
+    if (searchParams.get('type') === 'cashpoint') {
+      setForm((current) => ({ ...current, type: 'cashpoint' }));
+    }
+  }, [searchParams]);
 
   const load = async () => {
     try {
@@ -59,10 +78,17 @@ export default function MerchantQR() {
     load();
   }, []);
 
+  const needsAmount = form.type !== 'static';
+  const isCashPoint = form.type === 'cashpoint';
+
   const create = async (event) => {
     event.preventDefault();
-    if (form.type !== 'static' && (!Number(form.amount) || Number(form.amount) < 1)) {
-      toast.error('Enter a valid amount for dynamic QR');
+    if (needsAmount && (!Number(form.amount) || Number(form.amount) < 1)) {
+      toast.error(isCashPoint ? 'Enter cash amount for UPI Cash Point' : 'Enter a valid amount for dynamic QR');
+      return;
+    }
+    if (isCashPoint && Number(form.amount) > CASH_POINT_MAX) {
+      toast.error(`UPI Cash Point max is ₹${CASH_POINT_MAX} per transaction`);
       return;
     }
 
@@ -71,8 +97,8 @@ export default function MerchantQR() {
       const { data } = await api.post('/merchant/qr', {
         type: form.type,
         amount: form.type === 'static' ? undefined : Number(form.amount),
-        label: form.description || undefined,
-        description: form.description || undefined,
+        label: form.description || (isCashPoint ? 'UPI Cash Point' : undefined),
+        description: form.description || (isCashPoint ? 'UPI Cash Point' : undefined),
       });
       const created = normalizeQr(data.data || data);
       if (!created?.payload) {
@@ -82,13 +108,25 @@ export default function MerchantQR() {
       }
       setPreview(created);
       setItems((current) => [created, ...current.filter((item) => item.id !== created.id)]);
-      toast.success(form.type === 'dynamic' ? 'Dynamic QR ready' : 'QR code created');
+      toast.success(isCashPoint ? 'UPI Cash Point QR ready' : form.type === 'dynamic' ? 'Dynamic QR ready' : 'QR code created');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not create QR');
     } finally {
       setLoading(false);
     }
   };
+
+  const active = preview;
+  const activeIsCashPoint = active?.type === 'cashpoint';
+  const cardMeta = useMemo(
+    () => ({
+      headline: activeIsCashPoint ? 'UPI Cash Point' : 'Scan & Pay',
+      typeLabel: typeLabelFor(active?.type),
+      note: active?.description || (activeIsCashPoint ? 'Customer scans → you hand over cash' : ''),
+      footerApps: BUSINESS_FOOTER,
+    }),
+    [active?.description, active?.type, activeIsCashPoint]
+  );
 
   const download = async () => {
     const svg = qrRef.current?.querySelector('svg');
@@ -98,8 +136,10 @@ export default function MerchantQR() {
         qrSvg: svg,
         businessName,
         amountLabel: preview.amount ? formatINR(preview.amount) : '',
-        note: preview.description || '',
-        typeLabel: `${preview.type || 'Merchant'} QR`,
+        note: cardMeta.note,
+        typeLabel: cardMeta.typeLabel,
+        headline: activeIsCashPoint ? 'UPI CASH POINT' : 'SCAN & PAY',
+        footerApps: BUSINESS_FOOTER,
         fileName: `india-pay-now-${preview.id || 'qr'}`,
         format: 'png',
       });
@@ -119,11 +159,12 @@ export default function MerchantQR() {
     toast.success('QR payment data copied');
   };
 
-  const active = preview;
-
   return (
     <div>
-      <PageHeader title="Merchant QR" subtitle="Create reusable or amount-specific payment QR codes" />
+      <PageHeader
+        title="Merchant QR"
+        subtitle="Payment QR, amount QR, and UPI Cash Point for counter cash-out"
+      />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <h2 className="mb-4 font-display font-bold">Create QR</h2>
@@ -136,13 +177,20 @@ export default function MerchantQR() {
               <option value="static">Static</option>
               <option value="dynamic">Dynamic</option>
               <option value="amount">Fixed amount</option>
+              <option value="cashpoint">UPI Cash Point</option>
             </Select>
-            {form.type !== 'static' ? (
+            {isCashPoint ? (
+              <p className="rounded-xl bg-[#eef5ff] px-3 py-2 text-xs text-[#003087]">
+                Customer scans this QR, pays via any UPI app, and you hand over cash. Max ₹{CASH_POINT_MAX.toLocaleString('en-IN')} per txn.
+              </p>
+            ) : null}
+            {needsAmount ? (
               <Input
                 required
                 min="1"
+                max={isCashPoint ? String(CASH_POINT_MAX) : undefined}
                 type="number"
-                label="Amount (₹)"
+                label={isCashPoint ? 'Cash amount (₹)' : 'Amount (₹)'}
                 value={form.amount}
                 onChange={(event) => setForm({ ...form, amount: event.target.value })}
               />
@@ -150,10 +198,11 @@ export default function MerchantQR() {
             <Textarea
               label="Description"
               value={form.description}
+              placeholder={isCashPoint ? 'UPI Cash Point' : ''}
               onChange={(event) => setForm({ ...form, description: event.target.value })}
             />
             <Button loading={loading} type="submit">
-              <QrCode className="h-4 w-4" /> Generate QR
+              <QrCode className="h-4 w-4" /> {isCashPoint ? 'Generate Cash Point QR' : 'Generate QR'}
             </Button>
           </form>
         </Card>
@@ -166,8 +215,10 @@ export default function MerchantQR() {
                 value={active.payload}
                 businessName={businessName}
                 amountLabel={active.amount ? formatINR(active.amount) : ''}
-                note={active.description || ''}
-                typeLabel={`${active.type || 'Merchant'} QR`}
+                note={cardMeta.note}
+                typeLabel={cardMeta.typeLabel}
+                headline={cardMeta.headline}
+                footerApps={cardMeta.footerApps}
               />
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <Button variant="secondary" type="button" onClick={download}>
@@ -184,8 +235,10 @@ export default function MerchantQR() {
                         qrSvg: svg,
                         businessName,
                         amountLabel: preview.amount ? formatINR(preview.amount) : '',
-                        note: preview.description || '',
-                        typeLabel: `${preview.type || 'Merchant'} QR`,
+                        note: cardMeta.note,
+                        typeLabel: cardMeta.typeLabel,
+                        headline: activeIsCashPoint ? 'UPI CASH POINT' : 'SCAN & PAY',
+                        footerApps: BUSINESS_FOOTER,
                       });
                     } catch {
                       toast.error('Allow popups to print the QR card');
@@ -221,7 +274,7 @@ export default function MerchantQR() {
                   active?.id === item.id ? 'border-[#0070ba] bg-[#f0f7ff]' : 'border-slate-200 bg-white'
                 }`}
               >
-                <p className="text-sm font-bold capitalize text-[#001c64]">{item.type} QR</p>
+                <p className="text-sm font-bold capitalize text-[#001c64]">{typeLabelFor(item.type)}</p>
                 <p className="mt-1 text-xs text-slate-500">
                   {item.amount ? formatINR(item.amount) : 'Any amount'} · {item.description || 'No note'}
                 </p>

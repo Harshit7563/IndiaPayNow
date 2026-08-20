@@ -6,6 +6,8 @@ export function BrandedQrCard({
   amountLabel = '',
   note = '',
   typeLabel = 'Payment QR',
+  headline = 'Scan & Pay',
+  footerApps = 'UPI · GPay · PhonePe · Paytm · BHIM',
   size = 200,
   qrRef,
 }) {
@@ -20,7 +22,7 @@ export function BrandedQrCard({
       </div>
 
       <div className="px-5 pb-5 pt-5">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#0070ba]">Scan & Pay</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#0070ba]">{headline}</p>
         <h3 className="mt-1 font-display text-xl font-extrabold text-[#001c64]">{businessName}</h3>
         <p className="mt-0.5 text-xs capitalize text-slate-500">{typeLabel}</p>
 
@@ -37,9 +39,7 @@ export function BrandedQrCard({
       </div>
 
       <div className="bg-[#001c64] px-4 py-3">
-        <p className="text-[11px] font-semibold tracking-wide text-blue-200">
-          UPI · GPay · PhonePe · Paytm · BHIM
-        </p>
+        <p className="text-[11px] font-semibold tracking-wide text-blue-200">{footerApps}</p>
       </div>
     </div>
   );

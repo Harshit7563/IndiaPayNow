@@ -313,7 +313,7 @@ const lifecycle = [
     icon: QrCode,
     title: 'Collections',
     text: 'Counter QR, amount QR, and bulk links. Buyers pay many invoices in one go. You see it live.',
-    detail: ['Print-ready static QR', 'Dynamic QR with bill amount', 'UPI intent on phones'],
+    detail: ['Print-ready static QR', 'Dynamic QR with bill amount', 'UPI Cash Point cash-out'],
     to: '/for-business/merchant-qr',
   },
   {
@@ -363,12 +363,12 @@ const products = [
   {
     kicker: 'In-store',
     title: 'Merchant QR',
-    text: 'A branded QR that turns footfall into UPI. Static for the counter, dynamic when the bill amount must be exact.',
+    text: 'A branded QR that turns footfall into UPI — plus UPI Cash Point for neighbourhood cash-out. Static for the counter, dynamic when the bill amount must be exact.',
     to: '/for-business/merchant-qr',
     stats: [
       ['Static', 'Print ready'],
       ['Dynamic', 'Amount QR'],
-      ['Reports', 'Daily close'],
+      ['Cash Point', 'UPI cash-out'],
     ],
   },
   {

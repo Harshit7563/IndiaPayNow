@@ -25,6 +25,8 @@ export function buildBrandedQrSvg({
   amountLabel = '',
   note = '',
   typeLabel = 'Payment QR',
+  headline = 'SCAN & PAY',
+  footerApps = 'UPI · GPay · PhonePe · Paytm · BHIM',
 }) {
   const { size, body } = extractQrInner(qrSvg);
   const width = 420;
@@ -61,7 +63,7 @@ export function buildBrandedQrSvg({
   <path d="M18 42 C18 28.7 28.7 18 42 18 H378 C391.3 18 402 28.7 402 42 V118 H18 Z" fill="url(#ipnHeader)"/>
   <text x="210" y="58" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="800" fill="#ffffff">India Pay Now</text>
   <text x="210" y="82" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#dbeafe">Payments Made Simple</text>
-  <text x="210" y="150" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" letter-spacing="1.6" fill="#0070ba">SCAN &amp; PAY</text>
+  <text x="210" y="150" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" letter-spacing="1.6" fill="#0070ba">${escapeXml(headline)}</text>
   <text x="210" y="178" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="800" fill="#001c64">${escapeXml(businessName)}</text>
   <text x="210" y="200" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#64748b">${escapeXml(typeLabel)}</text>
   <rect x="${qrX - 16}" y="220" width="${qrBox + 32}" height="${qrBox + 32}" rx="22" fill="#ffffff" stroke="#e2e8f0"/>
@@ -69,7 +71,7 @@ export function buildBrandedQrSvg({
   ${amountBlock}
   ${noteBlock}
   <path d="M18 ${height - 70} H402 V${height - 42} C402 ${height - 28.7} 391.3 ${height - 18} 378 ${height - 18} H42 C28.7 ${height - 18} 18 ${height - 28.7} 18 ${height - 42} Z" fill="#001c64"/>
-  <text x="210" y="${height - 36}" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#bfdbfe">UPI · GPay · PhonePe · Paytm · BHIM</text>
+  <text x="210" y="${height - 36}" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#bfdbfe">${escapeXml(footerApps)}</text>
 </svg>`;
 }
 
@@ -79,10 +81,20 @@ export async function downloadBrandedQr({
   amountLabel,
   note,
   typeLabel,
+  headline,
+  footerApps,
   fileName = 'india-pay-now-qr',
   format = 'png',
 }) {
-  const svg = buildBrandedQrSvg({ qrSvg, businessName, amountLabel, note, typeLabel });
+  const svg = buildBrandedQrSvg({
+    qrSvg,
+    businessName,
+    amountLabel,
+    note,
+    typeLabel,
+    headline,
+    footerApps,
+  });
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
 
   if (format === 'svg') {
@@ -128,8 +140,18 @@ export function printBrandedQr({
   amountLabel,
   note,
   typeLabel,
+  headline,
+  footerApps,
 }) {
-  const svg = buildBrandedQrSvg({ qrSvg, businessName, amountLabel, note, typeLabel });
+  const svg = buildBrandedQrSvg({
+    qrSvg,
+    businessName,
+    amountLabel,
+    note,
+    typeLabel,
+    headline,
+    footerApps,
+  });
   const popup = window.open('', '_blank', 'noopener,noreferrer,width=520,height=760');
   if (!popup) {
     throw new Error('Popup blocked');

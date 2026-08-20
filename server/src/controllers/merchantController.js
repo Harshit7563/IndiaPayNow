@@ -393,15 +393,33 @@ export const createMerchantQr = (req, res) => {
   const user = req.user;
   const type = req.body.type || 'static';
   const amount = req.body.amount ? Number(req.body.amount) : null;
+  const isCashPoint = type === 'cashpoint';
+
+  if (type !== 'static' && (!amount || amount < 1)) {
+    return fail(res, isCashPoint ? 'Cash amount is required for UPI Cash Point' : 'Amount is required', 400);
+  }
+  if (isCashPoint && amount > 5000) {
+    return fail(res, 'UPI Cash Point max is ₹5,000 per transaction', 400);
+  }
+
   const id = generateId('qr');
+  const note = isCashPoint ? 'UPI Cash Point' : '';
   const payload = amount
-    ? `upi://pay?pa=${user.upi_id}&pn=${encodeURIComponent(merchant.business_name)}&am=${amount}&cu=INR`
+    ? `upi://pay?pa=${user.upi_id}&pn=${encodeURIComponent(merchant.business_name)}&am=${amount}&cu=INR${note ? `&tn=${encodeURIComponent(note)}` : ''}`
     : `upi://pay?pa=${user.upi_id}&pn=${encodeURIComponent(merchant.business_name)}&cu=INR`;
 
   db.prepare(
     `INSERT INTO qr_codes (id, user_id, merchant_id, type, amount, upi_payload, label)
      VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, user.id, merchant.id, type, amount, payload, req.body.label || merchant.business_name);
+  ).run(
+    id,
+    user.id,
+    merchant.id,
+    type,
+    amount,
+    payload,
+    req.body.label || req.body.description || (isCashPoint ? 'UPI Cash Point' : merchant.business_name)
+  );
 
   return success(res, { id, type, amount, upiId: user.upi_id, payload }, 'QR created', 201);
 };
