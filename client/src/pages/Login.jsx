@@ -638,12 +638,6 @@ export default function Login() {
               <span className="mt-0.5 block">harshit@indiapaynow.com · Password@123</span>
             </button>
           </div>
-          <p className="mt-5 text-center text-sm text-slate-500">
-            Collecting payments?{' '}
-            <Link to="/login?type=business" className="font-bold text-[#0070ba] hover:underline">
-              Business login
-            </Link>
-          </p>
         </div>
       </main>
     </div>
