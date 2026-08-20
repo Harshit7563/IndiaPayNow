@@ -580,12 +580,6 @@ export default function Login() {
                 >
                   Open a business account
                 </Link>
-                <p className="mt-4 text-center text-sm text-slate-500">
-                  Personal wallet?{' '}
-                  <Link to="/login" className="font-bold text-[#0070ba] hover:underline">
-                    Personal login
-                  </Link>
-                </p>
               </div>
             </div>
           </main>
