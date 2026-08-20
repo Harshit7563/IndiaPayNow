@@ -3,7 +3,7 @@ import { Download, Printer, QrCode, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import { formatINR } from '../../utils/format';
-import { downloadBrandedQr } from '../../utils/downloadBrandedQr';
+import { downloadBrandedQr, printBrandedQr } from '../../utils/downloadBrandedQr';
 import { BrandedQrCard } from '../../components/BrandedQrCard';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Input, PageHeader, Select, Textarea } from '../../components/ui';
@@ -177,8 +177,19 @@ export default function MerchantQR() {
                   variant="secondary"
                   type="button"
                   onClick={() => {
-                    window.print();
-                    toast.success('Print dialog opened');
+                    const svg = qrRef.current?.querySelector('svg');
+                    if (!svg || !preview) return toast.error('QR code is not ready');
+                    try {
+                      printBrandedQr({
+                        qrSvg: svg,
+                        businessName,
+                        amountLabel: preview.amount ? formatINR(preview.amount) : '',
+                        note: preview.description || '',
+                        typeLabel: `${preview.type || 'Merchant'} QR`,
+                      });
+                    } catch {
+                      toast.error('Allow popups to print the QR card');
+                    }
                   }}
                 >
                   <Printer className="h-4 w-4" /> Print

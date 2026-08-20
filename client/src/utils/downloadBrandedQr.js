@@ -121,3 +121,68 @@ export async function downloadBrandedQr({
     URL.revokeObjectURL(url);
   }
 }
+
+export function printBrandedQr({
+  qrSvg,
+  businessName,
+  amountLabel,
+  note,
+  typeLabel,
+}) {
+  const svg = buildBrandedQrSvg({ qrSvg, businessName, amountLabel, note, typeLabel });
+  const popup = window.open('', '_blank', 'noopener,noreferrer,width=520,height=760');
+  if (!popup) {
+    throw new Error('Popup blocked');
+  }
+
+  popup.document.open();
+  popup.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>India Pay Now QR</title>
+  <style>
+    @page { margin: 12mm; size: auto; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sheet {
+      width: 420px;
+      max-width: 100%;
+    }
+    .sheet svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    @media print {
+      html, body { background: #ffffff; }
+      .sheet { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">${svg.replace('<?xml version="1.0" encoding="UTF-8"?>', '')}</div>
+  <script>
+    window.onload = function () {
+      setTimeout(function () {
+        window.focus();
+        window.print();
+      }, 150);
+    };
+    window.onafterprint = function () {
+      window.close();
+    };
+  </script>
+</body>
+</html>`);
+  popup.document.close();
+}
